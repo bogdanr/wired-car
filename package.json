@@ -1,0 +1,12 @@
+{
+  "name": "etron-wired-car-report",
+  "private": true,
+  "description": "Build-time dependencies for report/build.py. Node is optional: tools/vendor.py fetches the same pinned versions without it.",
+  "scripts": {
+    "build": "python3 build.py"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "three": "0.186.1"
+  }
+}

@@ -1,0 +1,412 @@
+{
+ "model": {
+  "title": "2023 Audi SQ8 e-tron",
+  "author": "BloxBloger",
+  "authorUrl": "https://sketchfab.com/BloxBloger",
+  "url": "https://sketchfab.com/3d-models/2023-audi-sq8-e-tron-8428af67eb1a43cca3b576d241ee6a32",
+  "license": "CC BY-NC 4.0",
+  "licenseUrl": "http://creativecommons.org/licenses/by-nc/4.0/",
+  "forward": "+z",
+  "sourceDims": {
+   "length": 4915,
+   "width": 1976,
+   "height": 1616
+  },
+  "note": "Stand-in body for the painted look only: the 2023 SQ8 facelift, fitted per axis to the 55 quattro's published length, width and height. Grille, lamps and arches differ from the 2021 car. Every position and dimension in the drawing comes from the 55 quattro, not from this model."
+ },
+ "units": "mm; x behind the front bumper, y left of the centreline (+ = left), z above ground",
+ "dimensions": {
+  "length": 4901,
+  "width": 1935,
+  "widthMirrors": 2189,
+  "height": 1629,
+  "wheelbase": 2928,
+  "frontOverhang": 928,
+  "trackFront": 1655,
+  "trackRear": 1651,
+  "groundClearance": 172,
+  "tyre": "265/45 R21",
+  "tyreRadius": 386,
+  "tyreWidth": 265,
+  "rimRadius": 267,
+  "archRadius": 445,
+  "rearOverhang": 1045
+ },
+ "battery": {
+  "x0": 1260,
+  "x1": 3540,
+  "halfWidth": 815,
+  "z0": 170,
+  "z1": 510,
+  "gross_kWh": 95,
+  "modules": 36,
+  "cells": 432
+ },
+ "motors": {
+  "front": {
+   "x": 928,
+   "radius": 150,
+   "length": 520,
+   "label": "ASM · front"
+  },
+  "rear": {
+   "x": 3856,
+   "radius": 168,
+   "length": 580,
+   "label": "ASM · rear"
+  }
+ },
+ "profile": {
+  "_": "Profile tables [x, value]; interpolated with a monotone cubic. zt = top surface on the centreline (hood, windscreen, roof, rear glass). zbelt = where the body side turns in to the hood or glass. zs = shoulder (widest point). zb = underbody. hw = half width at the shoulder. rw = half width of the top surface.",
+  "zt": [
+   [
+    0,
+    700
+   ],
+   [
+    40,
+    800
+   ],
+   [
+    120,
+    900
+   ],
+   [
+    250,
+    975
+   ],
+   [
+    400,
+    1030
+   ],
+   [
+    600,
+    1076
+   ],
+   [
+    800,
+    1110
+   ],
+   [
+    1000,
+    1140
+   ],
+   [
+    1200,
+    1160
+   ],
+   [
+    1400,
+    1192
+   ],
+   [
+    1560,
+    1280
+   ],
+   [
+    1700,
+    1362
+   ],
+   [
+    1900,
+    1470
+   ],
+   [
+    2100,
+    1556
+   ],
+   [
+    2300,
+    1600
+   ],
+   [
+    2500,
+    1622
+   ],
+   [
+    2800,
+    1629
+   ],
+   [
+    3200,
+    1629
+   ],
+   [
+    3600,
+    1612
+   ],
+   [
+    3950,
+    1578
+   ],
+   [
+    4150,
+    1555
+   ],
+   [
+    4300,
+    1530
+   ],
+   [
+    4440,
+    1366
+   ],
+   [
+    4620,
+    1228
+   ],
+   [
+    4760,
+    1136
+   ],
+   [
+    4860,
+    1046
+   ],
+   [
+    4901,
+    960
+   ]
+  ],
+  "zbelt": [
+   [
+    0,
+    690
+   ],
+   [
+    150,
+    840
+   ],
+   [
+    800,
+    1060
+   ],
+   [
+    1400,
+    1150
+   ],
+   [
+    1560,
+    1170
+   ],
+   [
+    2900,
+    1180
+   ],
+   [
+    4200,
+    1200
+   ],
+   [
+    4440,
+    1190
+   ],
+   [
+    4620,
+    1150
+   ],
+   [
+    4800,
+    1076
+   ],
+   [
+    4901,
+    940
+   ]
+  ],
+  "zs": [
+   [
+    0,
+    640
+   ],
+   [
+    200,
+    760
+   ],
+   [
+    1000,
+    852
+   ],
+   [
+    2000,
+    882
+   ],
+   [
+    3000,
+    900
+   ],
+   [
+    4000,
+    912
+   ],
+   [
+    4700,
+    900
+   ],
+   [
+    4901,
+    850
+   ]
+  ],
+  "zb": [
+   [
+    0,
+    330
+   ],
+   [
+    90,
+    262
+   ],
+   [
+    300,
+    222
+   ],
+   [
+    1500,
+    198
+   ],
+   [
+    3500,
+    198
+   ],
+   [
+    4400,
+    258
+   ],
+   [
+    4760,
+    350
+   ],
+   [
+    4901,
+    440
+   ]
+  ],
+  "hw": [
+   [
+    0,
+    300
+   ],
+   [
+    40,
+    500
+   ],
+   [
+    120,
+    690
+   ],
+   [
+    250,
+    845
+   ],
+   [
+    400,
+    925
+   ],
+   [
+    600,
+    955
+   ],
+   [
+    928,
+    967
+   ],
+   [
+    1400,
+    962
+   ],
+   [
+    2600,
+    958
+   ],
+   [
+    3600,
+    962
+   ],
+   [
+    3856,
+    967
+   ],
+   [
+    4150,
+    958
+   ],
+   [
+    4440,
+    935
+   ],
+   [
+    4620,
+    882
+   ],
+   [
+    4760,
+    800
+   ],
+   [
+    4860,
+    660
+   ],
+   [
+    4901,
+    540
+   ]
+  ],
+  "rw": [
+   [
+    0,
+    280
+   ],
+   [
+    150,
+    640
+   ],
+   [
+    800,
+    820
+   ],
+   [
+    1500,
+    860
+   ],
+   [
+    1900,
+    790
+   ],
+   [
+    2450,
+    700
+   ],
+   [
+    3500,
+    686
+   ],
+   [
+    4200,
+    646
+   ],
+   [
+    4450,
+    700
+   ],
+   [
+    4620,
+    740
+   ],
+   [
+    4760,
+    680
+   ],
+   [
+    4901,
+    520
+   ]
+  ]
+ },
+ "sources": {
+  "dimensions": "Audi AG technical data, e-tron 55 quattro (GE) with 21-inch wheels: L 4901, W 1935 (2189 with mirrors), H 1629, wheelbase 2928, track 1655/1651, ground clearance 172 (air suspension, standard level); overhangs 928 front / 1045 rear (928 + 2928 + 1045 = 4901)",
+  "battery": "Audi e-tron press kit: 95 kWh gross, 36 cell modules, 432 pouch cells; pack approx. 2280 x 1630 x 340 mm under the cabin floor",
+  "profile": "zt/hw sampled from a scaled orthographic reference (local only, not shipped); roof capped at the published 1629 mm",
+  "model": "Painted body: 2023 Audi SQ8 e-tron by BloxBloger (CC BY-NC 4.0), prepared with tools/model.py; not a source of any dimension"
+ }
+}

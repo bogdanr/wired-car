@@ -1,0 +1,2828 @@
+{
+ "meta": {
+  "title": "The Wired Car",
+  "subtitle": "How the 40 computers in an Audi e-tron talk to each other — and to you",
+  "vin": "WAUZZZGE6MB040996",
+  "model": "Audi e-tron (GE), MY2021",
+  "gateway": "0x4010",
+  "tester": "0x0E00",
+  "doip_ip": "169.254.124.138",
+  "scanned": "2026-09-26",
+  "as_of": "2026-09-28",
+  "note": "Positions are inferred from each module's role and the MLB evo layout; the car exposes no physical-location data. Harness routes and bus membership are schematic. Every value is traceable to the sources listed under provenance."
+ },
+ "domains": [
+  {
+   "id": "gateway",
+   "label": "Gateway",
+   "blurb": "The router and diagnostic master — the single door to the outside world."
+  },
+  {
+   "id": "powertrain",
+   "label": "Powertrain / HV",
+   "blurb": "The electric heart: battery, inverters, charging and conversion."
+  },
+  {
+   "id": "chassis",
+   "label": "Chassis / Safety",
+   "blurb": "Brakes, steering, airbag, suspension. Never written to."
+  },
+  {
+   "id": "adas",
+   "label": "ADAS",
+   "blurb": "Perception: radars and the central driver-assistance computer."
+  },
+  {
+   "id": "body",
+   "label": "Body / Comfort",
+   "blurb": "Lights, doors, windows, seats, tailgate — the comfort layer."
+  },
+  {
+   "id": "lighting",
+   "label": "Lighting",
+   "blurb": "The Matrix-LED headlight modules."
+  },
+  {
+   "id": "hmi",
+   "label": "HMI / Display",
+   "blurb": "What you see and touch: cluster, head-up display, gear selector."
+  },
+  {
+   "id": "infotainment",
+   "label": "Infotainment",
+   "blurb": "Navigation, media and the centre screens."
+  },
+  {
+   "id": "telematics",
+   "label": "Telematics",
+   "blurb": "eCall, LTE, Wi-Fi — the car's link to the internet."
+  }
+ ],
+ "buses": [
+  {
+   "id": "can",
+   "label": "CAN",
+   "speed": "125–500 kbit/s",
+   "topology": "linear bus (2 wires)",
+   "why": "The workhorse. Multicast with priority arbitration — enough for slow comfort signals.",
+   "members": [
+    "0x400E",
+    "0x408B",
+    "0x4014",
+    "0x401B",
+    "0x4023",
+    "0x4047",
+    "0x4064",
+    "0x403E",
+    "0x403F",
+    "0x404A",
+    "0x404B",
+    "0x404C",
+    "0x4042",
+    "0x4053",
+    "0x4096",
+    "0x4097"
+   ],
+   "bitrate": 500000.0,
+   "bitrateMin": 125000.0
+  },
+  {
+   "id": "canfd",
+   "label": "CAN FD",
+   "speed": "2–5 Mbit/s",
+   "topology": "linear bus",
+   "why": "CAN extended: bigger payload (up to 64 B) and faster — for dense powertrain and HV traffic.",
+   "members": [
+    "0x4076",
+    "0x407B",
+    "0x407C",
+    "0x40B8",
+    "0x4044",
+    "0x40B7",
+    "0x40C4",
+    "0x40C5",
+    "0x4053"
+   ],
+   "bitrate": 5000000.0,
+   "bitrateMin": 2000000.0
+  },
+  {
+   "id": "flexray",
+   "label": "FlexRay",
+   "speed": "10 Mbit/s",
+   "topology": "bus + star (dual channel)",
+   "why": "Deterministic and redundant: every message has a fixed time slot, so a brake command always arrives in time.",
+   "members": [
+    "0x4013",
+    "0x4012",
+    "0x400C",
+    "0x4031",
+    "0x4080",
+    "0x4015",
+    "0x40F1"
+   ],
+   "bitrate": 10000000.0,
+   "bitrateMin": 10000000.0
+  },
+  {
+   "id": "lin",
+   "label": "LIN",
+   "speed": "≤ 20 kbit/s",
+   "topology": "single wire (master/slave)",
+   "why": "One wire, a few cents. For tiny actuators where CAN would be overkill.",
+   "members": [
+    "0x4064",
+    "0x4096",
+    "0x4097"
+   ],
+   "bitrate": 20000.0,
+   "bitrateMin": 1000.0
+  },
+  {
+   "id": "eth",
+   "label": "Automotive Ethernet",
+   "speed": "100 Mbit/s – 1 Gbit/s",
+   "topology": "switched star",
+   "why": "Bandwidth for camera/radar data, maps and diagnostics. DoIP runs here.",
+   "members": [
+    "0x404F",
+    "0x4057",
+    "0x404E",
+    "0x408A",
+    "0x409D",
+    "0x409E",
+    "0x4073",
+    "0x4067"
+   ],
+   "bitrate": 1000000000.0,
+   "bitrateMin": 100000000.0
+  }
+ ],
+ "udsServices": [
+  {
+   "id": "0x10",
+   "name": "DiagnosticSessionControl",
+   "role": "Switch the session (default / extended / programming)",
+   "kind": "session",
+   "barrier": "free"
+  },
+  {
+   "id": "0x3E",
+   "name": "TesterPresent",
+   "role": "Keep the session alive",
+   "kind": "session",
+   "barrier": "free"
+  },
+  {
+   "id": "0x22",
+   "name": "ReadDataByIdentifier",
+   "role": "Read a DID — identification, coding, measured values",
+   "kind": "read",
+   "barrier": "free"
+  },
+  {
+   "id": "0x19",
+   "name": "ReadDTCInformation",
+   "role": "Read the fault memory (DTCs)",
+   "kind": "read",
+   "barrier": "free"
+  },
+  {
+   "id": "0x31 03",
+   "name": "RoutineControl (results)",
+   "role": "Read the result of a routine",
+   "kind": "read",
+   "barrier": "partial"
+  },
+  {
+   "id": "0x27",
+   "name": "SecurityAccess",
+   "role": "Unlock with a seed → key exchange",
+   "kind": "privilege",
+   "barrier": "protected"
+  },
+  {
+   "id": "0x2E",
+   "name": "WriteDataByIdentifier",
+   "role": "Write a DID (coding / adaptation)",
+   "kind": "write",
+   "barrier": "extended session"
+  },
+  {
+   "id": "0x31 01",
+   "name": "RoutineControl (start)",
+   "role": "Start a routine (e.g. an actuator test)",
+   "kind": "write",
+   "barrier": "extended session"
+  },
+  {
+   "id": "0x2F",
+   "name": "InputOutputControl",
+   "role": "Force an output (actuator)",
+   "kind": "write",
+   "barrier": "extended session"
+  }
+ ],
+ "privilegeLadder": [
+  {
+   "n": 1,
+   "name": "Session",
+   "detail": "10 03 — extended session. Required for most writes.",
+   "blocks": "nothing yet"
+  },
+  {
+   "n": 2,
+   "name": "SecurityAccess",
+   "detail": "27 03 → 67 03 <seed>; 27 04 <key> → 67 04.",
+   "blocks": "unlocks a security level"
+  },
+  {
+   "n": 3,
+   "name": "SFD",
+   "detail": "Schutz der Fahrzeugdiagnose — challenge → token, unlocked online.",
+   "blocks": "security access, writes, coding, actuator tests (MY2020+)"
+  },
+  {
+   "n": 4,
+   "name": "Component protection",
+   "detail": "Komponentenschutz — binds a module to one car.",
+   "blocks": "swapping modules between cars"
+  }
+ ],
+ "modules": [
+  {
+   "id": "0x400C",
+   "kind": "ecu",
+   "addr": "0x400C",
+   "part": "4N0907129LA",
+   "name": "EV_SMLSKLOAU736",
+   "label": "Steering column electronics (SMLS)",
+   "domain": "chassis",
+   "bus": [
+    "flexray"
+   ],
+   "criticality": "critical",
+   "access": "read-only",
+   "role": "Reads the steering-column switches and stalks (indicators, wipers, cruise) and manages the electric column lock.",
+   "location": {
+    "mm": {
+     "x": 2080,
+     "y": 370,
+     "z": 880
+    },
+    "side": "L",
+    "zone": "cabin-front",
+    "confidence": "medium",
+    "basis": "steering column module — at the base of the steering column"
+   }
+  },
+  {
+   "id": "0x400E",
+   "kind": "ecu",
+   "addr": "0x400E",
+   "part": "4N0907063JG",
+   "name": "EV_BCM1BOSCHAU651",
+   "label": "Body Control Module 1 (Bosch)",
+   "domain": "body",
+   "bus": [
+    "can"
+   ],
+   "criticality": "medium",
+   "access": "read+write",
+   "role": "Body computer #1 (Bosch): exterior lighting, wipers, washers and central locking.",
+   "location": {
+    "mm": {
+     "x": 1820,
+     "y": 600,
+     "z": 600
+    },
+    "side": "L",
+    "zone": "cabin-front",
+    "confidence": "medium",
+    "basis": "body control module — behind the dash, driver side"
+   }
+  },
+  {
+   "id": "0x4010",
+   "kind": "ecu",
+   "addr": "0x4010",
+   "part": "4KL907468E",
+   "name": "EV_Gatew31xAU65x",
+   "label": "Central gateway",
+   "domain": "gateway",
+   "bus": [
+    "can",
+    "canfd",
+    "flexray",
+    "lin",
+    "eth"
+   ],
+   "criticality": "high",
+   "access": "read+write",
+   "role": "The car's router and diagnostic master — the single door to the outside world and the hub that moves messages between buses.",
+   "location": {
+    "mm": {
+     "x": 1960,
+     "y": 160,
+     "z": 640
+    },
+    "side": "C",
+    "zone": "cabin-front",
+    "confidence": "medium",
+    "basis": "router for all five buses — under the dash, left of the centre console, where the harness trunks meet (typical MLB evo placement)"
+   }
+  },
+  {
+   "id": "0x4012",
+   "kind": "ecu",
+   "addr": "0x4012",
+   "part": "4N0909144E",
+   "name": "EV_EPSVWBSAU426",
+   "label": "Electric power steering (EPS)",
+   "domain": "chassis",
+   "bus": [
+    "flexray"
+   ],
+   "criticality": "critical",
+   "access": "read-only",
+   "role": "Electric power steering: applies assist torque based on steering angle and vehicle speed.",
+   "location": {
+    "mm": {
+     "x": 1108,
+     "y": 220,
+     "z": 430
+    },
+    "side": "C",
+    "zone": "cabin-front",
+    "confidence": "medium",
+    "basis": "EPS control unit — on the steering rack, front of the cabin"
+   }
+  },
+  {
+   "id": "0x4013",
+   "kind": "ecu",
+   "addr": "0x4013",
+   "part": "4KE909059AF",
+   "name": "EV_BRSContiMKC1AU516",
+   "label": "Brake system — Continental MK C1",
+   "domain": "chassis",
+   "bus": [
+    "flexray"
+   ],
+   "criticality": "critical",
+   "access": "read-only",
+   "role": "Integrated brake system (Continental MK C1): ABS, ESP and brake-by-wire in one unit.",
+   "location": {
+    "mm": {
+     "x": 1400,
+     "y": 460,
+     "z": 860
+    },
+    "side": "C",
+    "zone": "cabin-front",
+    "confidence": "medium",
+    "basis": "integrated brake unit — at the firewall, engine-bay side"
+   }
+  },
+  {
+   "id": "0x4014",
+   "kind": "ecu",
+   "addr": "0x4014",
+   "part": "4KE920795D",
+   "name": "EV_DashBoardAU65X",
+   "label": "Instrument cluster",
+   "domain": "hmi",
+   "bus": [
+    "can"
+   ],
+   "criticality": "medium",
+   "access": "read+write",
+   "role": "The instrument cluster: driver displays, warning lamps, and the service-interval counters.",
+   "location": {
+    "mm": {
+     "x": 2000,
+     "y": 370,
+     "z": 1060
+    },
+    "side": "L",
+    "zone": "cabin-front",
+    "confidence": "high",
+    "basis": "instrument cluster — directly in front of the driver"
+   }
+  },
+  {
+   "id": "0x4015",
+   "kind": "ecu",
+   "addr": "0x4015",
+   "part": "4KE959655H",
+   "name": "EV_AirbaVW31SMEAU65x",
+   "label": "Airbag control unit",
+   "domain": "chassis",
+   "bus": [
+    "flexray"
+   ],
+   "criticality": "critical",
+   "access": "read-only",
+   "role": "Airbag and restraint control: fires the airbags and belt tensioners on a crash signal.",
+   "location": {
+    "mm": {
+     "x": 2380,
+     "y": 0,
+     "z": 470
+    },
+    "side": "C",
+    "zone": "cabin-front",
+    "confidence": "medium",
+    "basis": "airbag ECU — on the transmission tunnel, under the centre console"
+   }
+  },
+  {
+   "id": "0x401B",
+   "kind": "ecu",
+   "addr": "0x401B",
+   "part": "4KL919617A",
+   "name": "EV_HeadUpDisplAU65X",
+   "label": "Head-up display",
+   "domain": "hmi",
+   "bus": [
+    "can"
+   ],
+   "criticality": "low",
+   "access": "read+write",
+   "role": "Projects speed, navigation and driver-assistance info onto the windscreen.",
+   "location": {
+    "mm": {
+     "x": 1820,
+     "y": 370,
+     "z": 1010
+    },
+    "side": "L",
+    "zone": "cabin-front",
+    "confidence": "medium",
+    "basis": "head-up display — top of the dashboard, driver side"
+   }
+  },
+  {
+   "id": "0x4023",
+   "kind": "ecu",
+   "addr": "0x4023",
+   "part": "4KE959107",
+   "name": "EV_DeckLidCONTIAU536",
+   "label": "Tailgate / deck-lid control",
+   "domain": "body",
+   "bus": [
+    "can"
+   ],
+   "criticality": "medium",
+   "access": "read+write",
+   "role": "Controls the powered tailgate / deck lid (open, close, obstacle detection).",
+   "location": {
+    "mm": {
+     "x": 4600,
+     "y": 460,
+     "z": 920
+    },
+    "side": "C",
+    "zone": "rear",
+    "confidence": "high",
+    "basis": "tailgate control — at the rear hatch"
+   }
+  },
+  {
+   "id": "0x4031",
+   "kind": "ecu",
+   "addr": "0x4031",
+   "part": "3Q0905861C",
+   "name": "EV_ELVMarqMQBA0",
+   "label": "Electric steering column lock (ELV)",
+   "domain": "chassis",
+   "bus": [
+    "flexray"
+   ],
+   "criticality": "critical",
+   "access": "read-only",
+   "role": "Electric steering-column lock — the anti-theft steering lock.",
+   "location": {
+    "mm": {
+     "x": 1930,
+     "y": 370,
+     "z": 800
+    },
+    "side": "L",
+    "zone": "cabin-front",
+    "confidence": "medium",
+    "basis": "column lock — on the steering column"
+   }
+  },
+  {
+   "id": "0x403E",
+   "kind": "ecu",
+   "addr": "0x403E",
+   "part": "4M0959795N",
+   "name": "EV_DCU2RearDriveMAXHCONT",
+   "label": "Rear-left door control unit",
+   "domain": "body",
+   "bus": [
+    "can"
+   ],
+   "criticality": "medium",
+   "access": "read+write",
+   "role": "Rear-left door computer: window, lock and lighting for that door.",
+   "location": {
+    "mm": {
+     "x": 3480,
+     "y": 860,
+     "z": 760
+    },
+    "side": "L",
+    "zone": "doors",
+    "confidence": "high",
+    "basis": "rear-left door module — inside the rear-left door"
+   }
+  },
+  {
+   "id": "0x403F",
+   "kind": "ecu",
+   "addr": "0x403F",
+   "part": "4M0959795N",
+   "name": "EV_DCU2RearPasseMAXHCONT",
+   "label": "Rear-right door control unit",
+   "domain": "body",
+   "bus": [
+    "can"
+   ],
+   "criticality": "medium",
+   "access": "read+write",
+   "role": "Rear-right door computer: window, lock and lighting for that door.",
+   "location": {
+    "mm": {
+     "x": 3480,
+     "y": -860,
+     "z": 760
+    },
+    "side": "R",
+    "zone": "doors",
+    "confidence": "high",
+    "basis": "rear-right door module — inside the rear-right door"
+   }
+  },
+  {
+   "id": "0x4042",
+   "kind": "ecu",
+   "addr": "0x4042",
+   "part": "4KE965429C",
+   "name": "EV_ThermContrVISAU49X",
+   "label": "Thermal management / HVAC",
+   "domain": "powertrain",
+   "bus": [
+    "can"
+   ],
+   "criticality": "medium",
+   "access": "read+write",
+   "role": "Thermal management and climate: cabin HVAC plus the coolant loops that condition the HV battery.",
+   "location": {
+    "mm": {
+     "x": 1640,
+     "y": -180,
+     "z": 820
+    },
+    "side": "L",
+    "zone": "cabin-front",
+    "confidence": "medium",
+    "basis": "HVAC / thermal control — behind the dash, near the heater matrix"
+   }
+  },
+  {
+   "id": "0x4044",
+   "kind": "ecu",
+   "addr": "0x4044",
+   "part": "5QE915684AT",
+   "name": "EV_OBC3Phase1KLOMLBev16B",
+   "label": "On-board charger (3-phase)",
+   "domain": "powertrain",
+   "bus": [
+    "canfd"
+   ],
+   "criticality": "critical",
+   "access": "read-only",
+   "role": "On-board charger: converts AC mains to DC to charge the HV battery (3-phase).",
+   "location": {
+    "mm": {
+     "x": 620,
+     "y": 380,
+     "z": 700
+    },
+    "side": "L",
+    "zone": "front-axle",
+    "confidence": "medium",
+    "basis": "on-board charger — front of the car, near the charge port"
+   }
+  },
+  {
+   "id": "0x4047",
+   "kind": "ecu",
+   "addr": "0x4047",
+   "part": "8W0907383C",
+   "name": "EV_TrailFunctGener3Hella",
+   "label": "Trailer function module",
+   "domain": "body",
+   "bus": [
+    "can"
+   ],
+   "criticality": "medium",
+   "access": "read+write",
+   "role": "Trailer function module: detects a trailer and drives its lights and electrics.",
+   "location": {
+    "mm": {
+     "x": 4620,
+     "y": 500,
+     "z": 560
+    },
+    "side": "L",
+    "zone": "rear",
+    "confidence": "medium",
+    "basis": "trailer module — rear of the car, near the tow-bar wiring"
+   }
+  },
+  {
+   "id": "0x404A",
+   "kind": "ecu",
+   "addr": "0x404A",
+   "part": "4M0959793N",
+   "name": "EV_DCU2DriveSideMAXHCONT",
+   "label": "Front-left door control unit",
+   "domain": "body",
+   "bus": [
+    "can"
+   ],
+   "criticality": "medium",
+   "access": "read+write",
+   "role": "Front-left (driver) door computer: window, lock, mirror fold/dip and puddle light.",
+   "location": {
+    "mm": {
+     "x": 2320,
+     "y": 860,
+     "z": 760
+    },
+    "side": "L",
+    "zone": "doors",
+    "confidence": "high",
+    "basis": "front-left door module — inside the driver's door"
+   }
+  },
+  {
+   "id": "0x404B",
+   "kind": "ecu",
+   "addr": "0x404B",
+   "part": "4M0959792N",
+   "name": "EV_DCU2PasseSideMAXHCONT",
+   "label": "Front-right door control unit",
+   "domain": "body",
+   "bus": [
+    "can"
+   ],
+   "criticality": "medium",
+   "access": "read+write",
+   "role": "Front-right (passenger) door computer: window, lock and mirror.",
+   "location": {
+    "mm": {
+     "x": 2320,
+     "y": -860,
+     "z": 760
+    },
+    "side": "R",
+    "zone": "doors",
+    "confidence": "high",
+    "basis": "front-right door module — inside the passenger door"
+   }
+  },
+  {
+   "id": "0x404C",
+   "kind": "ecu",
+   "addr": "0x404C",
+   "part": "4M6959760",
+   "name": "EV_SCMDriveSideCONTIAU736",
+   "label": "Driver seat control module",
+   "domain": "body",
+   "bus": [
+    "can"
+   ],
+   "criticality": "low",
+   "access": "read+write",
+   "role": "Driver seat control: position memory, easy-entry and comfort settings.",
+   "location": {
+    "mm": {
+     "x": 2650,
+     "y": 420,
+     "z": 600
+    },
+    "side": "L",
+    "zone": "seats",
+    "confidence": "medium",
+    "basis": "seat module — under the driver's seat"
+   }
+  },
+  {
+   "id": "0x404E",
+   "kind": "ecu",
+   "addr": "0x404E",
+   "part": "4N0907566AL",
+   "name": "EV_RearRadarS1DelphAU651",
+   "label": "Rear radar 1 (left)",
+   "domain": "adas",
+   "bus": [
+    "eth"
+   ],
+   "criticality": "high",
+   "access": "read+write",
+   "role": "Rear-left radar: blind-spot and rear cross-traffic detection.",
+   "location": {
+    "mm": {
+     "x": 4800,
+     "y": 760,
+     "z": 520
+    },
+    "side": "L",
+    "zone": "rear-axle",
+    "confidence": "high",
+    "basis": "rear radar sensor 1 — rear corner, left"
+   }
+  },
+  {
+   "id": "0x404F",
+   "kind": "ecu",
+   "addr": "0x404F",
+   "part": "4K4907117G",
+   "name": "EV_ZFASAU516",
+   "label": "zFAS central driver-assistance controller",
+   "domain": "adas",
+   "bus": [
+    "eth"
+   ],
+   "criticality": "high",
+   "access": "read+write",
+   "role": "Central driver-assistance computer: fuses radar and camera data into the environment model.",
+   "location": {
+    "mm": {
+     "x": 2720,
+     "y": -60,
+     "z": 560
+    },
+    "side": "C",
+    "zone": "cabin-front",
+    "confidence": "medium",
+    "basis": "zFAS — behind the rear seat bench / in the luggage area on MLBevo; placed centrally here"
+   }
+  },
+  {
+   "id": "0x4053",
+   "kind": "ecu",
+   "addr": "0x4053",
+   "part": "4KL713041A",
+   "name": "EV_GSMKLOAU516",
+   "label": "Gear selector (shift-by-wire)",
+   "domain": "hmi",
+   "bus": [
+    "can",
+    "canfd"
+   ],
+   "criticality": "medium",
+   "access": "read+write",
+   "role": "Gear selector (shift-by-wire): turns the selector position into a gear request.",
+   "location": {
+    "mm": {
+     "x": 2260,
+     "y": 0,
+     "z": 700
+    },
+    "side": "C",
+    "zone": "cabin-front",
+    "confidence": "medium",
+    "basis": "gear selector — on the centre console"
+   }
+  },
+  {
+   "id": "0x4057",
+   "kind": "ecu",
+   "addr": "0x4057",
+   "part": "4KE907561E",
+   "name": "EV_ACCBOSCHAU65X",
+   "label": "Adaptive cruise control front radar (Bosch)",
+   "domain": "adas",
+   "bus": [
+    "eth"
+   ],
+   "criticality": "high",
+   "access": "read+write",
+   "role": "Front radar for adaptive cruise control and distance regulation.",
+   "location": {
+    "mm": {
+     "x": 70,
+     "y": 0,
+     "z": 450
+    },
+    "side": "C",
+    "zone": "nose",
+    "confidence": "high",
+    "basis": "ACC front radar — behind the front grille, centre"
+   }
+  },
+  {
+   "id": "0x4064",
+   "kind": "ecu",
+   "addr": "0x4064",
+   "part": "4KE035335A",
+   "name": "EV_ESoundMLBEvoS1NN",
+   "label": "e-Sound / AVAS",
+   "domain": "body",
+   "bus": [
+    "can",
+    "lin"
+   ],
+   "criticality": "low",
+   "access": "read+write",
+   "role": "AVAS / e-Sound: generates the pedestrian warning sound and the Drive-Select cabin sound.",
+   "location": {
+    "mm": {
+     "x": 4560,
+     "y": -320,
+     "z": 470
+    },
+    "side": "C",
+    "zone": "rear-axle",
+    "confidence": "medium",
+    "basis": "sound actuator — under the car, front/rear; placed near the rear axle"
+   }
+  },
+  {
+   "id": "0x4067",
+   "kind": "ecu",
+   "addr": "0x4067",
+   "part": "4KE035282G",
+   "name": "EV_ConBoxHighAU49X",
+   "label": "Connectivity Box High",
+   "domain": "telematics",
+   "bus": [
+    "eth"
+   ],
+   "criticality": "low",
+   "access": "read+write",
+   "role": "Connectivity Box High: eCall, LTE, Wi-Fi and the car's online services.",
+   "location": {
+    "mm": {
+     "x": 2560,
+     "y": -240,
+     "z": 640
+    },
+    "side": "R",
+    "zone": "cabin-front",
+    "confidence": "medium",
+    "basis": "connectivity box — behind the dash / under the rear bench; placed in the cabin"
+   }
+  },
+  {
+   "id": "0x4073",
+   "kind": "ecu",
+   "addr": "0x4073",
+   "part": "4M2035070B",
+   "name": "EV_MUTI",
+   "label": "Infotainment head unit (MIB)",
+   "domain": "infotainment",
+   "bus": [
+    "eth"
+   ],
+   "criticality": "low",
+   "access": "read+write",
+   "role": "Infotainment head unit (MIB): navigation, media and the centre screens.",
+   "location": {
+    "mm": {
+     "x": 1980,
+     "y": 40,
+     "z": 960
+    },
+    "side": "L",
+    "zone": "cabin-front",
+    "confidence": "medium",
+    "basis": "MIB head unit — behind the centre display"
+   }
+  },
+  {
+   "id": "0x4076",
+   "kind": "ecu",
+   "addr": "0x4076",
+   "part": "4KE907558C",
+   "name": "EV_VCU00XXX0204KE907558C",
+   "label": "Vehicle Control Unit (VCU)",
+   "domain": "powertrain",
+   "bus": [
+    "canfd"
+   ],
+   "criticality": "critical",
+   "access": "read-only",
+   "role": "Vehicle Control Unit: the EV powertrain coordinator — torque, charging and energy flow.",
+   "location": {
+    "mm": {
+     "x": 2440,
+     "y": -160,
+     "z": 520
+    },
+    "side": "C",
+    "zone": "floor",
+    "confidence": "medium",
+    "basis": "VCU — in the cabin/floor area, coordinating the HV system"
+   }
+  },
+  {
+   "id": "0x407B",
+   "kind": "ecu",
+   "addr": "0x407B",
+   "part": "4KE915233AQ",
+   "name": "EV_BECM0842071",
+   "label": "Battery Energy Control Module (BECM)",
+   "domain": "powertrain",
+   "bus": [
+    "canfd"
+   ],
+   "criticality": "critical",
+   "access": "read-only",
+   "role": "Battery Energy Control Module: monitors and protects the HV battery (SoC, cells, temperature).",
+   "location": {
+    "mm": {
+     "x": 3060,
+     "y": 0,
+     "z": 460
+    },
+    "side": "C",
+    "zone": "floor",
+    "confidence": "high",
+    "basis": "BECM — mounted on the HV battery pack, under the floor"
+   }
+  },
+  {
+   "id": "0x407C",
+   "kind": "ecu",
+   "addr": "0x407C",
+   "part": "0EF907080H",
+   "name": "EV_DMCMHITACAU516",
+   "label": "Front drive-motor control module (Hitachi)",
+   "domain": "powertrain",
+   "bus": [
+    "canfd"
+   ],
+   "criticality": "critical",
+   "access": "read-only",
+   "role": "Front drive-motor control module (Hitachi): the inverter that drives the front motor.",
+   "location": {
+    "mm": {
+     "x": 928,
+     "y": 0,
+     "z": 610
+    },
+    "side": "C",
+    "zone": "front-axle",
+    "confidence": "medium",
+    "basis": "front motor inverter — on the front axle"
+   }
+  },
+  {
+   "id": "0x4080",
+   "kind": "ecu",
+   "addr": "0x4080",
+   "part": "4KE907777AH",
+   "name": "EV_ChassContrContiAU651",
+   "label": "Chassis control (air suspension)",
+   "domain": "chassis",
+   "bus": [
+    "flexray"
+   ],
+   "criticality": "critical",
+   "access": "read-only",
+   "role": "Chassis control: adaptive air suspension and damping.",
+   "location": {
+    "mm": {
+     "x": 3320,
+     "y": 380,
+     "z": 590
+    },
+    "side": "C",
+    "zone": "floor",
+    "confidence": "medium",
+    "basis": "chassis control — central underbody, near the air suspension valves"
+   }
+  },
+  {
+   "id": "0x408A",
+   "kind": "ecu",
+   "addr": "0x408A",
+   "part": "4N0907566AL",
+   "name": "EV_RearRadarS2DelphAU651",
+   "label": "Rear radar 2 (right)",
+   "domain": "adas",
+   "bus": [
+    "eth"
+   ],
+   "criticality": "high",
+   "access": "read+write",
+   "role": "Rear-right radar: blind-spot and rear cross-traffic detection.",
+   "location": {
+    "mm": {
+     "x": 4800,
+     "y": -760,
+     "z": 520
+    },
+    "side": "R",
+    "zone": "rear-axle",
+    "confidence": "high",
+    "basis": "rear radar sensor 2 — rear corner, right"
+   }
+  },
+  {
+   "id": "0x408B",
+   "kind": "ecu",
+   "addr": "0x408B",
+   "part": "8W1907064BH",
+   "name": "EV_BCM2HellaAU736",
+   "label": "Body Control Module 2 (Hella)",
+   "domain": "body",
+   "bus": [
+    "can"
+   ],
+   "criticality": "medium",
+   "access": "read+write",
+   "role": "Body computer #2 (Hella): comfort body functions and the LIN master for the rear lights.",
+   "location": {
+    "mm": {
+     "x": 1860,
+     "y": -600,
+     "z": 600
+    },
+    "side": "R",
+    "zone": "cabin-front",
+    "confidence": "medium",
+    "basis": "body control module 2 — behind the dash, passenger side"
+   }
+  },
+  {
+   "id": "0x4096",
+   "kind": "ecu",
+   "addr": "0x4096",
+   "part": "4K0941591BC",
+   "name": "EV_LMSLeftHELLAAU58X",
+   "label": "Matrix-LED light module, left",
+   "domain": "lighting",
+   "bus": [
+    "can",
+    "lin"
+   ],
+   "criticality": "medium",
+   "access": "read+write",
+   "role": "Left Matrix-LED headlight module: adaptive high beam and beam shaping.",
+   "location": {
+    "mm": {
+     "x": 210,
+     "y": 690,
+     "z": 790
+    },
+    "side": "L",
+    "zone": "nose",
+    "confidence": "high",
+    "basis": "left headlight module — in the left headlight"
+   }
+  },
+  {
+   "id": "0x4097",
+   "kind": "ecu",
+   "addr": "0x4097",
+   "part": "4K0941591BC",
+   "name": "EV_LMSRightHELLAAU58X",
+   "label": "Matrix-LED light module, right",
+   "domain": "lighting",
+   "bus": [
+    "can",
+    "lin"
+   ],
+   "criticality": "medium",
+   "access": "read+write",
+   "role": "Right Matrix-LED headlight module: adaptive high beam and beam shaping.",
+   "location": {
+    "mm": {
+     "x": 210,
+     "y": -690,
+     "z": 790
+    },
+    "side": "R",
+    "zone": "nose",
+    "confidence": "high",
+    "basis": "right headlight module — in the right headlight"
+   }
+  },
+  {
+   "id": "0x409D",
+   "kind": "ecu",
+   "addr": "0x409D",
+   "part": "4N0907669AL",
+   "name": "EV_FrontCorneRadarS1AU651",
+   "label": "Front corner radar 1 (left)",
+   "domain": "adas",
+   "bus": [
+    "eth"
+   ],
+   "criticality": "high",
+   "access": "read+write",
+   "role": "Front-left corner radar: cross-traffic and turning-assist coverage.",
+   "location": {
+    "mm": {
+     "x": 170,
+     "y": 760,
+     "z": 480
+    },
+    "side": "L",
+    "zone": "nose",
+    "confidence": "high",
+    "basis": "front corner radar 1 — front corner, left"
+   }
+  },
+  {
+   "id": "0x409E",
+   "kind": "ecu",
+   "addr": "0x409E",
+   "part": "4N0907669AL",
+   "name": "EV_FrontCorneRadarS2AU651",
+   "label": "Front corner radar 2 (right)",
+   "domain": "adas",
+   "bus": [
+    "eth"
+   ],
+   "criticality": "high",
+   "access": "read+write",
+   "role": "Front-right corner radar: cross-traffic and turning-assist coverage.",
+   "location": {
+    "mm": {
+     "x": 170,
+     "y": -760,
+     "z": 480
+    },
+    "side": "R",
+    "zone": "nose",
+    "confidence": "high",
+    "basis": "front corner radar 2 — front corner, right"
+   }
+  },
+  {
+   "id": "0x40B7",
+   "kind": "ecu",
+   "addr": "0x40B7",
+   "part": "4KE907171C",
+   "name": "EV_DCDCHVTDKAU516",
+   "label": "DC/DC converter HV→12 V (TDK)",
+   "domain": "powertrain",
+   "bus": [
+    "canfd"
+   ],
+   "criticality": "critical",
+   "access": "read-only",
+   "role": "DC/DC converter: steps the HV battery down to the 12 V system that runs the electronics.",
+   "location": {
+    "mm": {
+     "x": 620,
+     "y": -380,
+     "z": 700
+    },
+    "side": "R",
+    "zone": "front-axle",
+    "confidence": "medium",
+    "basis": "DC/DC converter — front of the car, near the HV junction"
+   }
+  },
+  {
+   "id": "0x40B8",
+   "kind": "ecu",
+   "addr": "0x40B8",
+   "part": "0EF907180K",
+   "name": "EV_DMCM2HITACAU516",
+   "label": "Rear drive-motor control module (Hitachi)",
+   "domain": "powertrain",
+   "bus": [
+    "canfd"
+   ],
+   "criticality": "critical",
+   "access": "read-only",
+   "role": "Rear drive-motor control module (Hitachi): the inverter that drives the rear motor.",
+   "location": {
+    "mm": {
+     "x": 3856,
+     "y": 0,
+     "z": 630
+    },
+    "side": "C",
+    "zone": "rear-axle",
+    "confidence": "medium",
+    "basis": "rear motor inverter — on the rear axle"
+   }
+  },
+  {
+   "id": "0x40C4",
+   "kind": "ecu",
+   "addr": "0x40C4",
+   "part": "4KE907181C",
+   "name": "EV_RearVLeftFicosAU516",
+   "label": "Rear-axle power electronics, left",
+   "domain": "powertrain",
+   "bus": [
+    "canfd"
+   ],
+   "criticality": "critical",
+   "access": "read-only",
+   "role": "Rear-axle power electronics (left): switching stage for the rear drive.",
+   "location": {
+    "mm": {
+     "x": 3688,
+     "y": 300,
+     "z": 560
+    },
+    "side": "L",
+    "zone": "rear-axle",
+    "confidence": "medium",
+    "basis": "rear-axle power electronics, left"
+   }
+  },
+  {
+   "id": "0x40C5",
+   "kind": "ecu",
+   "addr": "0x40C5",
+   "part": "4KE907182C",
+   "name": "EV_RearVRightFicosAU516",
+   "label": "Rear-axle power electronics, right",
+   "domain": "powertrain",
+   "bus": [
+    "canfd"
+   ],
+   "criticality": "critical",
+   "access": "read-only",
+   "role": "Rear-axle power electronics (right): switching stage for the rear drive.",
+   "location": {
+    "mm": {
+     "x": 3688,
+     "y": -300,
+     "z": 560
+    },
+    "side": "R",
+    "zone": "rear-axle",
+    "confidence": "medium",
+    "basis": "rear-axle power electronics, right"
+   }
+  },
+  {
+   "id": "0x40F1",
+   "kind": "ecu",
+   "addr": "0x40F1",
+   "part": "4KE959655H",
+   "name": "EV_AirbaVW31SMEAU65x",
+   "label": "Airbag control unit (duplicate address)",
+   "domain": "chassis",
+   "bus": [
+    "flexray"
+   ],
+   "criticality": "critical",
+   "access": "read-only",
+   "role": "Second logical address answering for the airbag control unit (same part number as 0x4015).",
+   "location": {
+    "mm": {
+     "x": 2500,
+     "y": 0,
+     "z": 470
+    },
+    "side": "C",
+    "zone": "cabin-front",
+    "confidence": "low",
+    "basis": "duplicate airbag address — co-located with 0x4015; exact node unclear"
+   }
+  },
+  {
+   "id": "motor-front",
+   "kind": "machine",
+   "label": "Front traction motor",
+   "domain": "powertrain",
+   "bus": [],
+   "criticality": "critical",
+   "access": "read-only",
+   "role": "Front traction motor (driven by the front inverter).",
+   "location": {
+    "mm": {
+     "x": 928,
+     "y": 0,
+     "z": 386
+    },
+    "side": "C",
+    "zone": "front-axle",
+    "confidence": "medium",
+    "basis": "front e-machine — on the front axle"
+   }
+  },
+  {
+   "id": "motor-rear",
+   "kind": "machine",
+   "label": "Rear traction motor",
+   "domain": "powertrain",
+   "bus": [],
+   "criticality": "critical",
+   "access": "read-only",
+   "role": "Rear traction motor (driven by the rear inverter).",
+   "location": {
+    "mm": {
+     "x": 3856,
+     "y": 0,
+     "z": 386
+    },
+    "side": "C",
+    "zone": "rear-axle",
+    "confidence": "medium",
+    "basis": "rear e-machine — on the rear axle"
+   }
+  },
+  {
+   "id": "rear-lights",
+   "kind": "lin",
+   "label": "Rear-light ECUs (LIN slaves)",
+   "domain": "lighting",
+   "bus": [
+    "lin"
+   ],
+   "criticality": "medium",
+   "access": "read-only",
+   "role": "Intelligent tail-light ECUs — LIN slaves behind BCM2, not on the diagnostic bus.",
+   "location": {
+    "mm": {
+     "x": 4840,
+     "y": 0,
+     "z": 1080
+    },
+    "side": "C",
+    "zone": "rear",
+    "confidence": "high",
+    "basis": "rear-light ECUs — in the tail lights, behind BCM2 (LIN)"
+   }
+  },
+  {
+   "id": "tester",
+   "kind": "tester",
+   "label": "Tester (ODIS / this tool)",
+   "domain": "gateway",
+   "bus": [],
+   "criticality": "low",
+   "access": "read+write",
+   "role": "Your tester — ODIS-E, VCDS or this tool. The only thing that talks to the car from outside.",
+   "location": {
+    "mm": {
+     "x": 1650,
+     "y": 1500,
+     "z": 700
+    },
+    "side": "L",
+    "zone": "outside",
+    "confidence": "high",
+    "basis": "off-board: a laptop outside the car, plugged into the OBD socket in the driver footwell (DoIP over the OBD Ethernet pins)"
+   }
+  }
+ ],
+ "flows": [
+  {
+   "from": "0x4057",
+   "to": "0x404F",
+   "kind": "value",
+   "layer": "fusion",
+   "label": "front radar detections"
+  },
+  {
+   "from": "0x404E",
+   "to": "0x404F",
+   "kind": "value",
+   "layer": "fusion",
+   "label": "rear-left radar detections"
+  },
+  {
+   "from": "0x408A",
+   "to": "0x404F",
+   "kind": "value",
+   "layer": "fusion",
+   "label": "rear-right radar detections"
+  },
+  {
+   "from": "0x409D",
+   "to": "0x404F",
+   "kind": "value",
+   "layer": "fusion",
+   "label": "front-left corner radar"
+  },
+  {
+   "from": "0x409E",
+   "to": "0x404F",
+   "kind": "value",
+   "layer": "fusion",
+   "label": "front-right corner radar"
+  },
+  {
+   "from": "0x404F",
+   "to": "0x4010",
+   "kind": "value",
+   "layer": "fusion",
+   "label": "fused environment model"
+  },
+  {
+   "from": "0x4053",
+   "to": "0x4076",
+   "kind": "command",
+   "layer": "powertrain",
+   "label": "gear request (shift-by-wire)"
+  },
+  {
+   "from": "0x4076",
+   "to": "0x407C",
+   "kind": "command",
+   "layer": "powertrain",
+   "label": "torque request — front motor"
+  },
+  {
+   "from": "0x4076",
+   "to": "0x40B8",
+   "kind": "command",
+   "layer": "powertrain",
+   "label": "torque request — rear motor"
+  },
+  {
+   "from": "0x4076",
+   "to": "0x407B",
+   "kind": "command",
+   "layer": "powertrain",
+   "label": "battery power request"
+  },
+  {
+   "from": "0x4076",
+   "to": "0x4044",
+   "kind": "command",
+   "layer": "powertrain",
+   "label": "charge schedule"
+  },
+  {
+   "from": "0x4076",
+   "to": "0x40B7",
+   "kind": "command",
+   "layer": "powertrain",
+   "label": "DC/DC enable"
+  },
+  {
+   "from": "0x407B",
+   "to": "0x4076",
+   "kind": "value",
+   "layer": "powertrain",
+   "label": "state of charge, cell voltages, temperature"
+  },
+  {
+   "from": "0x4042",
+   "to": "0x407B",
+   "kind": "command",
+   "layer": "powertrain",
+   "label": "battery thermal management"
+  },
+  {
+   "from": "0x407B",
+   "to": "0x407C",
+   "kind": "power",
+   "layer": "power",
+   "label": "HV DC to the front inverter"
+  },
+  {
+   "from": "0x407B",
+   "to": "0x40B8",
+   "kind": "power",
+   "layer": "power",
+   "label": "HV DC to the rear inverter"
+  },
+  {
+   "from": "0x407B",
+   "to": "0x40B7",
+   "kind": "power",
+   "layer": "power",
+   "label": "HV to the DC/DC converter"
+  },
+  {
+   "from": "0x4044",
+   "to": "0x407B",
+   "kind": "power",
+   "layer": "power",
+   "label": "charge power into the pack"
+  },
+  {
+   "from": "0x407C",
+   "to": "motor-front",
+   "kind": "power",
+   "layer": "power",
+   "label": "3-phase AC to the front motor"
+  },
+  {
+   "from": "0x40B8",
+   "to": "motor-rear",
+   "kind": "power",
+   "layer": "power",
+   "label": "3-phase AC to the rear motor"
+  },
+  {
+   "from": "0x400E",
+   "to": "0x4096",
+   "kind": "command",
+   "layer": "body",
+   "label": "left headlight control"
+  },
+  {
+   "from": "0x400E",
+   "to": "0x4097",
+   "kind": "command",
+   "layer": "body",
+   "label": "right headlight control"
+  },
+  {
+   "from": "0x408B",
+   "to": "rear-lights",
+   "kind": "command",
+   "layer": "body",
+   "label": "rear-light animation (LIN)"
+  },
+  {
+   "from": "0x400E",
+   "to": "0x4023",
+   "kind": "command",
+   "layer": "body",
+   "label": "tailgate open / close"
+  },
+  {
+   "from": "0x400E",
+   "to": "0x4047",
+   "kind": "command",
+   "layer": "body",
+   "label": "trailer lighting"
+  },
+  {
+   "from": "0x400E",
+   "to": "0x404A",
+   "kind": "command",
+   "layer": "comfort",
+   "label": "lock / window / mirror — front left"
+  },
+  {
+   "from": "0x400E",
+   "to": "0x404B",
+   "kind": "command",
+   "layer": "comfort",
+   "label": "lock / window — front right"
+  },
+  {
+   "from": "0x400E",
+   "to": "0x403E",
+   "kind": "command",
+   "layer": "comfort",
+   "label": "lock / window — rear left"
+  },
+  {
+   "from": "0x400E",
+   "to": "0x403F",
+   "kind": "command",
+   "layer": "comfort",
+   "label": "lock / window — rear right"
+  },
+  {
+   "from": "0x400E",
+   "to": "0x404C",
+   "kind": "command",
+   "layer": "comfort",
+   "label": "seat memory / easy-entry"
+  },
+  {
+   "from": "0x400E",
+   "to": "0x4014",
+   "kind": "value",
+   "layer": "bap",
+   "label": "door / light status (BAP)"
+  },
+  {
+   "from": "0x4076",
+   "to": "0x4014",
+   "kind": "value",
+   "layer": "bap",
+   "label": "hybrid drive / energy flow (BAP)"
+  },
+  {
+   "from": "0x407B",
+   "to": "0x4014",
+   "kind": "value",
+   "layer": "bap",
+   "label": "battery state (BAP)"
+  },
+  {
+   "from": "0x4080",
+   "to": "0x4014",
+   "kind": "value",
+   "layer": "bap",
+   "label": "suspension / tilt angle (BAP)"
+  },
+  {
+   "from": "0x404F",
+   "to": "0x4014",
+   "kind": "value",
+   "layer": "bap",
+   "label": "driver-assistance status (BAP)"
+  },
+  {
+   "from": "0x4073",
+   "to": "0x4014",
+   "kind": "value",
+   "layer": "bap",
+   "label": "navigation / media (BAP)"
+  },
+  {
+   "from": "0x4067",
+   "to": "0x4014",
+   "kind": "value",
+   "layer": "bap",
+   "label": "telephone / online (BAP)"
+  }
+ ],
+ "provenance": {
+  "modules": "scans/modules_20260926.json + docs/modules.md §2",
+  "roles": "docs/modules.md §3.3 and docs/architecture.html §6",
+  "domains": "docs/architecture.html §6 (module groups)",
+  "buses": "docs/architecture.html §4–5",
+  "criticality": "docs/architecture.html §7",
+  "access": "docs/architecture.html §8.3",
+  "udsServices": "docs/architecture.html §8.1",
+  "privilegeLadder": "docs/architecture.html §8.2",
+  "diagnosticChain": "docs/findings.md §1.1",
+  "linRearLights": "docs/findings.md §12.2",
+  "bap": "docs/capability-map.md §1",
+  "locations": "INFERRED — location.mm per module, placed from role and the MLB evo layout; no physical-position data exists in the repo (docs/architecture.html footer)",
+  "harness": "SCHEMATIC — harness routes follow typical MLB evo paths; not traced on the car",
+  "topology": "docs/architecture.html §4–5 (FlexRay star coupler and Ethernet switch placed in the gateway: schematic); LIN master from docs/findings.md §12.2",
+  "components": "Physical parts linked to their controlling ECU by role (docs/modules.md §3.3)",
+  "scenarios": "Sequences of existing flows[] only; the tester scenario follows docs/findings.md §1.1",
+  "udsTrace": "docs/findings.md §1.1 and the cluster write sequence (F198/F199 precondition)",
+  "vehicle": "data/vehicle.json — Audi e-tron 55 quattro (GE) published dimensions; body surfaces are a simplified construction drawn to those dimensions"
+ },
+ "components": [
+  {
+   "id": "headlamp-l",
+   "label": "Matrix-LED headlamp, left",
+   "ecus": [
+    "0x4096"
+   ],
+   "behaviour": "emit",
+   "anchor": {
+    "x": 150,
+    "y": 690,
+    "z": 800
+   }
+  },
+  {
+   "id": "headlamp-r",
+   "label": "Matrix-LED headlamp, right",
+   "ecus": [
+    "0x4097"
+   ],
+   "behaviour": "emit",
+   "anchor": {
+    "x": 150,
+    "y": -690,
+    "z": 800
+   }
+  },
+  {
+   "id": "rear-bar",
+   "label": "Rear light bar + lamp clusters",
+   "ecus": [
+    "rear-lights",
+    "0x408B"
+   ],
+   "behaviour": "emit",
+   "anchor": {
+    "x": 4880,
+    "y": 0,
+    "z": 1080
+   }
+  },
+  {
+   "id": "door-fl",
+   "label": "Front-left door",
+   "ecus": [
+    "0x404A"
+   ],
+   "behaviour": "swing",
+   "anchor": {
+    "x": 2300,
+    "y": 960,
+    "z": 800
+   }
+  },
+  {
+   "id": "door-fr",
+   "label": "Front-right door",
+   "ecus": [
+    "0x404B"
+   ],
+   "behaviour": "swing",
+   "anchor": {
+    "x": 2300,
+    "y": -960,
+    "z": 800
+   }
+  },
+  {
+   "id": "door-rl",
+   "label": "Rear-left door",
+   "ecus": [
+    "0x403E"
+   ],
+   "behaviour": "swing",
+   "anchor": {
+    "x": 3450,
+    "y": 960,
+    "z": 800
+   }
+  },
+  {
+   "id": "door-rr",
+   "label": "Rear-right door",
+   "ecus": [
+    "0x403F"
+   ],
+   "behaviour": "swing",
+   "anchor": {
+    "x": 3450,
+    "y": -960,
+    "z": 800
+   }
+  },
+  {
+   "id": "tailgate",
+   "label": "Tailgate",
+   "ecus": [
+    "0x4023"
+   ],
+   "behaviour": "swing",
+   "anchor": {
+    "x": 4750,
+    "y": 0,
+    "z": 1300
+   }
+  },
+  {
+   "id": "motor-f",
+   "label": "Front traction motor",
+   "ecus": [
+    "motor-front",
+    "0x407C"
+   ],
+   "behaviour": "spin",
+   "anchor": {
+    "x": 928,
+    "y": 0,
+    "z": 386
+   }
+  },
+  {
+   "id": "motor-r",
+   "label": "Rear traction motor",
+   "ecus": [
+    "motor-rear",
+    "0x40B8",
+    "0x40C4",
+    "0x40C5"
+   ],
+   "behaviour": "spin",
+   "anchor": {
+    "x": 3856,
+    "y": 0,
+    "z": 386
+   }
+  },
+  {
+   "id": "battery",
+   "label": "HV battery pack · 95 kWh · 36 modules",
+   "ecus": [
+    "0x407B"
+   ],
+   "behaviour": "fill",
+   "anchor": {
+    "x": 2400,
+    "y": 0,
+    "z": 340
+   }
+  },
+  {
+   "id": "charge-l",
+   "label": "Charge flap, left (AC/DC)",
+   "ecus": [
+    "0x4044"
+   ],
+   "behaviour": "swing",
+   "anchor": {
+    "x": 1430,
+    "y": 960,
+    "z": 905
+   }
+  },
+  {
+   "id": "charge-r",
+   "label": "Charge flap, right (AC)",
+   "ecus": [
+    "0x4044"
+   ],
+   "behaviour": "swing",
+   "anchor": {
+    "x": 1430,
+    "y": -960,
+    "z": 905
+   }
+  },
+  {
+   "id": "radar-front",
+   "label": "Long-range radar cone",
+   "ecus": [
+    "0x4057"
+   ],
+   "behaviour": "sweep",
+   "anchor": {
+    "x": 70,
+    "y": 0,
+    "z": 450
+   }
+  },
+  {
+   "id": "radar-fl",
+   "label": "Front corner radar cone, left",
+   "ecus": [
+    "0x409D"
+   ],
+   "behaviour": "sweep",
+   "anchor": {
+    "x": 170,
+    "y": 760,
+    "z": 480
+   }
+  },
+  {
+   "id": "radar-fr",
+   "label": "Front corner radar cone, right",
+   "ecus": [
+    "0x409E"
+   ],
+   "behaviour": "sweep",
+   "anchor": {
+    "x": 170,
+    "y": -760,
+    "z": 480
+   }
+  },
+  {
+   "id": "radar-rl",
+   "label": "Rear radar cone, left",
+   "ecus": [
+    "0x404E"
+   ],
+   "behaviour": "sweep",
+   "anchor": {
+    "x": 4800,
+    "y": 760,
+    "z": 520
+   }
+  },
+  {
+   "id": "radar-rr",
+   "label": "Rear radar cone, right",
+   "ecus": [
+    "0x408A"
+   ],
+   "behaviour": "sweep",
+   "anchor": {
+    "x": 4800,
+    "y": -760,
+    "z": 520
+   }
+  },
+  {
+   "id": "obd",
+   "label": "OBD socket (DoIP)",
+   "ecus": [
+    "tester",
+    "0x4010"
+   ],
+   "behaviour": "emit",
+   "anchor": {
+    "x": 1950,
+    "y": 520,
+    "z": 480
+   }
+  }
+ ],
+ "topology": {
+  "gateway": "0x4010",
+  "ports": {
+   "can": "CAN comfort / body",
+   "canfd": "CAN FD powertrain",
+   "flexray": "FlexRay chassis (active star coupler)",
+   "lin": "LIN",
+   "eth": "Automotive Ethernet (switched)"
+  },
+  "star": {
+   "flexray": "0x4010",
+   "eth": "0x4010"
+  },
+  "lin": [
+   {
+    "master": "0x408B",
+    "slaves": [
+     "rear-lights"
+    ],
+    "basis": "docs/findings.md §12.2 — rear-light ECUs are LIN slaves behind BCM2"
+   }
+  ],
+  "localLin": [
+   "0x4064",
+   "0x4096",
+   "0x4097"
+  ],
+  "hv": [
+   [
+    "0x407B",
+    "0x407C"
+   ],
+   [
+    "0x407B",
+    "0x40B8"
+   ],
+   [
+    "0x407B",
+    "0x40B7"
+   ],
+   [
+    "0x4044",
+    "0x407B"
+   ],
+   [
+    "0x407C",
+    "motor-front"
+   ],
+   [
+    "0x40B8",
+    "motor-rear"
+   ],
+   [
+    "charge-l",
+    "0x4044"
+   ],
+   [
+    "charge-r",
+    "0x4044"
+   ],
+   [
+    "0x40B8",
+    "0x40C4"
+   ],
+   [
+    "0x40B8",
+    "0x40C5"
+   ]
+  ],
+  "diag": {
+   "tester": "tester",
+   "socket": "obd",
+   "link": "DoIP · 100BASE-TX over the OBD socket"
+  },
+  "note": "The gateway sits on every bus, so it is never listed as a bus member. FlexRay and Ethernet are drawn as stars centred on the gateway; CAN and CAN FD as shared lines; LIN hangs off its master, not the gateway."
+ },
+ "harness": {
+  "basis": "Schematic routing along the usual MLB evo paths: dash cross-car beam, firewall pass-throughs, front-end carrier, sills, centre tunnel, A/B-pillar door boots and the rear wheelhouses. Not traced on the car.",
+  "nodes": {
+   "gw": {
+    "x": 1960,
+    "y": 160,
+    "z": 640
+   },
+   "dash-l": {
+    "x": 1850,
+    "y": 620,
+    "z": 700
+   },
+   "dash-c": {
+    "x": 1850,
+    "y": 0,
+    "z": 700
+   },
+   "dash-r": {
+    "x": 1850,
+    "y": -620,
+    "z": 700
+   },
+   "fw-l": {
+    "x": 1450,
+    "y": 560,
+    "z": 860
+   },
+   "fw-r": {
+    "x": 1450,
+    "y": -560,
+    "z": 860
+   },
+   "rail-l1": {
+    "x": 900,
+    "y": 640,
+    "z": 760
+   },
+   "rail-l2": {
+    "x": 330,
+    "y": 680,
+    "z": 700
+   },
+   "carrier": {
+    "x": 140,
+    "y": 0,
+    "z": 560
+   },
+   "rail-r2": {
+    "x": 330,
+    "y": -680,
+    "z": 700
+   },
+   "rail-r1": {
+    "x": 900,
+    "y": -640,
+    "z": 760
+   },
+   "tun-1": {
+    "x": 2300,
+    "y": 0,
+    "z": 580
+   },
+   "tun-2": {
+    "x": 2900,
+    "y": 0,
+    "z": 580
+   },
+   "tun-3": {
+    "x": 3400,
+    "y": 0,
+    "z": 600
+   },
+   "sill-l0": {
+    "x": 1760,
+    "y": 820,
+    "z": 400
+   },
+   "sill-l1": {
+    "x": 2900,
+    "y": 820,
+    "z": 400
+   },
+   "sill-l2": {
+    "x": 3440,
+    "y": 820,
+    "z": 400
+   },
+   "sill-r0": {
+    "x": 1760,
+    "y": -820,
+    "z": 400
+   },
+   "sill-r1": {
+    "x": 2900,
+    "y": -820,
+    "z": 400
+   },
+   "sill-r2": {
+    "x": 3440,
+    "y": -820,
+    "z": 400
+   },
+   "arch-l": {
+    "x": 3440,
+    "y": 640,
+    "z": 760
+   },
+   "arch-r": {
+    "x": 3440,
+    "y": -640,
+    "z": 760
+   },
+   "rear-l1": {
+    "x": 4420,
+    "y": 640,
+    "z": 720
+   },
+   "rear-l2": {
+    "x": 4740,
+    "y": 520,
+    "z": 660
+   },
+   "rear-c": {
+    "x": 4800,
+    "y": 0,
+    "z": 660
+   },
+   "rear-r2": {
+    "x": 4740,
+    "y": -520,
+    "z": 660
+   },
+   "rear-r1": {
+    "x": 4420,
+    "y": -640,
+    "z": 720
+   },
+   "apil-l": {
+    "x": 1700,
+    "y": 860,
+    "z": 820
+   },
+   "bpil-l": {
+    "x": 2930,
+    "y": 860,
+    "z": 820
+   },
+   "apil-r": {
+    "x": 1700,
+    "y": -860,
+    "z": 820
+   },
+   "bpil-r": {
+    "x": 2930,
+    "y": -860,
+    "z": 820
+   },
+   "axle-r": {
+    "x": 3628,
+    "y": 0,
+    "z": 620
+   }
+  },
+  "edges": [
+   [
+    "gw",
+    "dash-c"
+   ],
+   [
+    "dash-c",
+    "dash-l"
+   ],
+   [
+    "dash-c",
+    "dash-r"
+   ],
+   [
+    "dash-l",
+    "fw-l"
+   ],
+   [
+    "dash-r",
+    "fw-r"
+   ],
+   [
+    "fw-l",
+    "rail-l1"
+   ],
+   [
+    "rail-l1",
+    "rail-l2"
+   ],
+   [
+    "rail-l2",
+    "carrier"
+   ],
+   [
+    "carrier",
+    "rail-r2"
+   ],
+   [
+    "rail-r2",
+    "rail-r1"
+   ],
+   [
+    "rail-r1",
+    "fw-r"
+   ],
+   [
+    "gw",
+    "tun-1"
+   ],
+   [
+    "tun-1",
+    "tun-2"
+   ],
+   [
+    "tun-2",
+    "tun-3"
+   ],
+   [
+    "tun-3",
+    "axle-r"
+   ],
+   [
+    "dash-l",
+    "sill-l0"
+   ],
+   [
+    "sill-l0",
+    "sill-l1"
+   ],
+   [
+    "sill-l1",
+    "sill-l2"
+   ],
+   [
+    "sill-l2",
+    "arch-l"
+   ],
+   [
+    "arch-l",
+    "rear-l1"
+   ],
+   [
+    "rear-l1",
+    "rear-l2"
+   ],
+   [
+    "rear-l2",
+    "rear-c"
+   ],
+   [
+    "rear-c",
+    "rear-r2"
+   ],
+   [
+    "rear-r2",
+    "rear-r1"
+   ],
+   [
+    "rear-r1",
+    "arch-r"
+   ],
+   [
+    "arch-r",
+    "sill-r2"
+   ],
+   [
+    "sill-r2",
+    "sill-r1"
+   ],
+   [
+    "sill-r1",
+    "sill-r0"
+   ],
+   [
+    "sill-r0",
+    "dash-r"
+   ],
+   [
+    "dash-l",
+    "apil-l"
+   ],
+   [
+    "sill-l1",
+    "bpil-l"
+   ],
+   [
+    "dash-r",
+    "apil-r"
+   ],
+   [
+    "sill-r1",
+    "bpil-r"
+   ],
+   [
+    "tun-2",
+    "sill-l1"
+   ],
+   [
+    "tun-2",
+    "sill-r1"
+   ]
+  ],
+  "hvNodes": {
+   "pack-f": {
+    "x": 1300,
+    "y": 0,
+    "z": 430
+   },
+   "pack-r": {
+    "x": 3540,
+    "y": 0,
+    "z": 430
+   }
+  }
+ },
+ "scenarios": [
+  {
+   "id": "drive",
+   "title": "Select D and pull away",
+   "blurb": "Shift-by-wire, torque requests to both axles, and high-voltage power out of the pack.",
+   "shot": "iso",
+   "steps": [
+    {
+     "flows": [
+      [
+       "0x4053",
+       "0x4076"
+      ]
+     ],
+     "caption": "The gear selector is just a sensor. It sends a <b>gear request</b> over CAN FD to the Vehicle Control Unit."
+    },
+    {
+     "flows": [
+      [
+       "0x4076",
+       "0x407C"
+      ],
+      [
+       "0x4076",
+       "0x40B8"
+      ],
+      [
+       "0x4076",
+       "0x407B"
+      ]
+     ],
+     "caption": "The VCU decides how much torque each axle gets and asks the battery for power — three commands on the powertrain CAN FD.",
+     "shot": "iso"
+    },
+    {
+     "flows": [
+      [
+       "0x407B",
+       "0x407C"
+      ],
+      [
+       "0x407B",
+       "0x40B8"
+      ],
+      [
+       "0x407C",
+       "motor-front"
+      ],
+      [
+       "0x40B8",
+       "motor-rear"
+      ]
+     ],
+     "caption": "Power, not data: HV DC leaves the pack, the inverters turn it into 3-phase AC and the motors turn.",
+     "components": [
+      "motor-f",
+      "motor-r",
+      "battery"
+     ],
+     "shot": "side"
+    },
+    {
+     "flows": [
+      [
+       "0x407B",
+       "0x4076"
+      ],
+      [
+       "0x4076",
+       "0x4014"
+      ]
+     ],
+     "caption": "The pack reports state of charge back to the VCU, which tells the cluster what to draw as <b>energy flow (BAP)</b> — crossing from CAN FD to CAN through the gateway.",
+     "components": [
+      "motor-f",
+      "motor-r"
+     ],
+     "shot": "iso"
+    }
+   ]
+  },
+  {
+   "id": "doors",
+   "title": "Unlock and open the doors",
+   "blurb": "One body computer commands four door modules, the lamps and the tailgate.",
+   "shot": "iso",
+   "steps": [
+    {
+     "flows": [
+      [
+       "0x400E",
+       "0x404A"
+      ],
+      [
+       "0x400E",
+       "0x404B"
+      ],
+      [
+       "0x400E",
+       "0x403E"
+      ],
+      [
+       "0x400E",
+       "0x403F"
+      ]
+     ],
+     "caption": "Body Control Module 1 sends <b>lock / window</b> commands to all four door modules on the comfort CAN.",
+     "components": [
+      "door-fl",
+      "door-fr",
+      "door-rl",
+      "door-rr"
+     ]
+    },
+    {
+     "flows": [
+      [
+       "0x400E",
+       "0x4096"
+      ],
+      [
+       "0x400E",
+       "0x4097"
+      ],
+      [
+       "0x408B",
+       "rear-lights"
+      ]
+     ],
+     "caption": "Coming-home lighting: BCM1 drives the Matrix-LED modules over CAN; BCM2 reaches the rear lights over <b>LIN</b>, the slowest wire in the car.",
+     "components": [
+      "door-fl",
+      "door-fr",
+      "door-rl",
+      "door-rr",
+      "headlamp-l",
+      "headlamp-r",
+      "rear-bar"
+     ],
+     "shot": "iso-rear"
+    },
+    {
+     "flows": [
+      [
+       "0x400E",
+       "0x4023"
+      ]
+     ],
+     "caption": "Tailgate open — another BCM1 command on the same CAN.",
+     "components": [
+      "tailgate",
+      "rear-bar"
+     ],
+     "shot": "iso-rear"
+    },
+    {
+     "flows": [
+      [
+       "0x400E",
+       "0x4014"
+      ]
+     ],
+     "caption": "Finally the cluster is told, over BAP, which doors are open so it can draw them.",
+     "components": [
+      "door-fl",
+      "door-fr",
+      "door-rl",
+      "door-rr",
+      "tailgate"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "charge",
+   "title": "Plug in and charge",
+   "blurb": "The charger, the pack and the thermal system negotiate while the cluster keeps score.",
+   "shot": "iso",
+   "steps": [
+    {
+     "flows": [
+      [
+       "0x4076",
+       "0x4044"
+      ]
+     ],
+     "caption": "The VCU hands the on-board charger its <b>charge schedule</b> over CAN FD.",
+     "components": [
+      "charge-l"
+     ]
+    },
+    {
+     "flows": [
+      [
+       "0x4044",
+       "0x407B"
+      ],
+      [
+       "0x4042",
+       "0x407B"
+      ]
+     ],
+     "caption": "Charge power flows into the pack while thermal management asks the BECM to condition the cells — the thermal command crosses from CAN to CAN FD.",
+     "components": [
+      "charge-l",
+      "battery"
+     ]
+    },
+    {
+     "flows": [
+      [
+       "0x407B",
+       "0x4076"
+      ],
+      [
+       "0x407B",
+       "0x4014"
+      ]
+     ],
+     "caption": "The BECM reports state of charge, cell voltages and temperatures; the cluster gets the <b>battery state (BAP)</b>.",
+     "components": [
+      "charge-l",
+      "battery"
+     ],
+     "shot": "plan"
+    }
+   ]
+  },
+  {
+   "id": "acc",
+   "title": "Five radars, one picture",
+   "blurb": "Perception runs on Ethernet into the zFAS, which feeds the rest of the car.",
+   "shot": "plan",
+   "steps": [
+    {
+     "flows": [
+      [
+       "0x4057",
+       "0x404F"
+      ],
+      [
+       "0x409D",
+       "0x404F"
+      ],
+      [
+       "0x409E",
+       "0x404F"
+      ]
+     ],
+     "caption": "The long-range radar and the two front corner radars stream <b>detections</b> over Automotive Ethernet to the zFAS.",
+     "components": [
+      "radar-front",
+      "radar-fl",
+      "radar-fr"
+     ]
+    },
+    {
+     "flows": [
+      [
+       "0x404E",
+       "0x404F"
+      ],
+      [
+       "0x408A",
+       "0x404F"
+      ]
+     ],
+     "caption": "The two rear radars do the same. Ethernet is a switched star: every stream passes the switch at the gateway.",
+     "components": [
+      "radar-front",
+      "radar-fl",
+      "radar-fr",
+      "radar-rl",
+      "radar-rr"
+     ]
+    },
+    {
+     "flows": [
+      [
+       "0x404F",
+       "0x4010"
+      ],
+      [
+       "0x404F",
+       "0x4014"
+      ]
+     ],
+     "caption": "The zFAS publishes one <b>fused environment model</b> to the gateway and the assistance status to the cluster.",
+     "components": [
+      "radar-front",
+      "radar-fl",
+      "radar-fr",
+      "radar-rl",
+      "radar-rr"
+     ],
+     "shot": "iso"
+    }
+   ]
+  },
+  {
+   "id": "diag",
+   "title": "A tester reads the cluster",
+   "blurb": "The exact path the inventory scan took: laptop → OBD → gateway → ECU → back.",
+   "shot": "iso",
+   "steps": [
+    {
+     "path": [
+      "tester",
+      "0x4010"
+     ],
+     "kind": "diag",
+     "caption": "The laptop opens a <b>DoIP</b> connection (TCP 13400) through the OBD socket. It can only ever talk to the gateway.",
+     "components": [
+      "obd"
+     ]
+    },
+    {
+     "path": [
+      "0x4010",
+      "0x4014"
+     ],
+     "kind": "diag",
+     "caption": "The gateway rewrites the logical address and forwards <b>22 F187</b> onto the comfort CAN, to the cluster.",
+     "components": [
+      "obd"
+     ]
+    },
+    {
+     "path": [
+      "0x4014",
+      "0x4010",
+      "tester"
+     ],
+     "kind": "diag",
+     "caption": "The cluster answers <b>62 F187 4KE920795D</b>; the gateway routes the reply back out. Repeat forty times and you have the inventory.",
+     "components": [
+      "obd"
+     ]
+    }
+   ]
+  }
+ ],
+ "udsTrace": [
+  {
+   "state": "req",
+   "who": "tester",
+   "what": "DoIP routing activation to gateway <b>0x4010</b>",
+   "note": "TCP 13400 · link up",
+   "from": "tester",
+   "to": "0x4010"
+  },
+  {
+   "state": "ok",
+   "who": "gateway",
+   "what": "routes the request to the addressed ECU",
+   "note": "logical address rewritten",
+   "from": "0x4010",
+   "to": "0x4014"
+  },
+  {
+   "state": "req",
+   "who": "tester → 0x4014",
+   "what": "<b>10 03</b> — DiagnosticSessionControl (extended)",
+   "note": "",
+   "from": "tester",
+   "to": "0x4014"
+  },
+  {
+   "state": "ok",
+   "who": "0x4014 → tester",
+   "what": "<b>50 03</b> 00 32 01 F4 — session accepted",
+   "note": "P2 = 50 ms",
+   "from": "0x4014",
+   "to": "tester"
+  },
+  {
+   "state": "req",
+   "who": "tester → 0x4014",
+   "what": "<b>22 F187</b> — ReadDataByIdentifier (spare part number)",
+   "note": "",
+   "from": "tester",
+   "to": "0x4014"
+  },
+  {
+   "state": "ok",
+   "who": "0x4014 → tester",
+   "what": "<b>62 F187</b> 4KE920795D — the cluster answers",
+   "note": "identification, no key needed",
+   "from": "0x4014",
+   "to": "tester"
+  },
+  {
+   "state": "req",
+   "who": "tester → 0x4014",
+   "what": "<b>22 F19E</b> — ReadDataByIdentifier (ECU name)",
+   "note": "",
+   "from": "tester",
+   "to": "0x4014"
+  },
+  {
+   "state": "ok",
+   "who": "0x4014 → tester",
+   "what": "<b>62 F19E</b> EV_DashBoardAU65X",
+   "note": "this is how all 40 were found",
+   "from": "0x4014",
+   "to": "tester"
+  },
+  {
+   "state": "gate",
+   "who": "tester → 0x4014",
+   "what": "<b>2E 0600</b> — WriteDataByIdentifier (coding block)",
+   "note": "",
+   "from": "tester",
+   "to": "0x4014"
+  },
+  {
+   "state": "gate",
+   "who": "0x4014 → tester",
+   "what": "<b>7F 2E 24</b> — requestSequenceError",
+   "note": "a precondition is missing",
+   "from": "0x4014",
+   "to": "tester"
+  },
+  {
+   "state": "ok",
+   "who": "tester → 0x4014",
+   "what": "<b>2E F198</b> 00 00 00 00 00 2E — service-interval parameter",
+   "note": "",
+   "from": "tester",
+   "to": "0x4014"
+  },
+  {
+   "state": "ok",
+   "who": "0x4014 → tester",
+   "what": "<b>6E F1 98</b> — accepted",
+   "note": "",
+   "from": "0x4014",
+   "to": "tester"
+  },
+  {
+   "state": "ok",
+   "who": "tester → 0x4014",
+   "what": "<b>2E F199</b> 26 09 27 — service date",
+   "note": "",
+   "from": "tester",
+   "to": "0x4014"
+  },
+  {
+   "state": "ok",
+   "who": "0x4014 → tester",
+   "what": "<b>6E F1 99</b> — accepted",
+   "note": "",
+   "from": "0x4014",
+   "to": "tester"
+  },
+  {
+   "state": "req",
+   "who": "tester → 0x4014",
+   "what": "<b>2E 0600</b> — retry the coding write",
+   "note": "",
+   "from": "tester",
+   "to": "0x4014"
+  },
+  {
+   "state": "ok",
+   "who": "0x4014 → tester",
+   "what": "<b>6E 06 00</b> — accepted, then read back to verify",
+   "note": "no 0x27, no SFD token",
+   "from": "0x4014",
+   "to": "tester"
+  }
+ ],
+ "accessGroups": [
+  {
+   "group": "Gateway",
+   "read": "Installation list, component protection, topology, bus statistics",
+   "write": "Register/unregister ECUs, component protection"
+  },
+  {
+   "group": "Cluster",
+   "read": "Versions, coding, measured values, service-interval data",
+   "write": "Country/language/units, needle sweep, logo, speed correction, SIA reset"
+  },
+  {
+   "group": "Body",
+   "read": "Coding, door/lid states, voltages, window positions, DTCs",
+   "write": "DRL, coming/leaving home, auto-lock, mirror fold, window comfort"
+  },
+  {
+   "group": "Brakes / Airbag",
+   "read": "DTCs, pad wear, pressures, variant coding",
+   "write": "Never written"
+  },
+  {
+   "group": "HV / Powertrain",
+   "read": "SoC, cell voltages, temperatures, insulation, charging data, DTCs",
+   "write": "Almost fully locked (service routines only)"
+  },
+  {
+   "group": "ADAS",
+   "read": "Calibration status, DTCs, coding",
+   "write": "Enable assistance features, calibration routines"
+  },
+  {
+   "group": "Infotainment",
+   "read": "Versions, region, coding",
+   "write": "Video-in-motion, menu items, region"
+  }
+ ]
+}

@@ -1,0 +1,13 @@
+# Reproducible from pinned, checksum-verified sources: python3 tools/vendor.py
+vendor/
+node_modules/
+
+# Build output: python3 build.py
+dist/
+
+# Local screenshot runs: python3 tools/shoot.py
+tools/shots/
+
+__pycache__/
+*.pyc
+.DS_Store

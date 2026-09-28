@@ -1,0 +1,128 @@
+/* ============================================================
+   The Wired Car — design tokens
+   ------------------------------------------------------------
+   Two themes, same names:
+     graphite : dark drafting table (default)
+     vellum   : light drafting film, also the print theme
+   Colour carries exactly one meaning each:
+     --bus-*  : which wire a thing lives on (never domain)
+     --hv     : high voltage and live energy — the only accent
+   Criticality is shown by weight and tick marks, not hue.
+   ============================================================ */
+
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url("font:inter-latin-wght-normal.woff2") format("woff2"); }
+@font-face { font-family: "JetBrains Mono"; font-style: normal; font-weight: 400; font-display: swap;
+  src: url("font:jetbrains-mono-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "JetBrains Mono"; font-style: normal; font-weight: 700; font-display: swap;
+  src: url("font:jetbrains-mono-latin-700-normal.woff2") format("woff2"); }
+
+:root {
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* type scale — display is set tight, annotation is mono caps */
+  --t-display: clamp(2.6rem, 1.2rem + 4.6vw, 5.6rem);
+  --t-h2: clamp(1.9rem, 1.1rem + 2.4vw, 3.3rem);
+  --t-h3: clamp(1.15rem, 1rem + 0.5vw, 1.4rem);
+  --t-lead: clamp(1.05rem, 0.98rem + 0.3vw, 1.22rem);
+  --t-body: 0.975rem;
+  --t-small: 0.86rem;
+  --t-note: 0.74rem;
+  --t-micro: 0.66rem;
+
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 24px;
+  --s-6: 32px; --s-7: 48px; --s-8: 72px; --s-9: 120px; --s-10: 176px;
+
+  --r-1: 4px; --r-2: 8px; --r-3: 14px; --r-pill: 999px;
+  --ease: cubic-bezier(.2, .7, .1, 1);
+  --dur: 420ms;
+  --wrap: 1280px;
+  --gutter: clamp(20px, 4vw, 56px);
+  --bar-h: 56px;
+}
+
+/* ---------- Graphite (dark) ---------- */
+:root, [data-theme="graphite"] {
+  color-scheme: dark;
+  --bg: #0b0c0e;
+  --bg-2: #101114;
+  --surface: #141518;
+  --surface-2: #1a1c20;
+  --glass: rgba(16, 17, 20, 0.72);
+  --rule: rgba(236, 234, 228, 0.09);
+  --rule-2: rgba(236, 234, 228, 0.16);
+  --grid: rgba(236, 234, 228, 0.035);
+  --ink: #ecebe6;
+  --ink-2: #a9a8a2;
+  --ink-3: #74736e;
+  --ink-4: #4b4b48;
+  --hv: #ff6b2c;
+  --hv-soft: rgba(255, 107, 44, 0.14);
+  --ok: #7fd6a4;
+  --warn: #f2c14e;
+  --bad: #ff6f6f;
+  --focus: #ffffff;
+
+  --bus-can: #5ea8ff;
+  --bus-canfd: #b18cff;
+  --bus-flexray: #39d3b0;
+  --bus-lin: #e8c35a;
+  --bus-eth: #ff79c6;
+
+  /* WebGL line roles (read by the stage) */
+  --gl-ink: #d9dde3;
+  --gl-ink2: #8c9199;
+  --gl-ink3: #585c63;
+  --gl-tone: #a9bcd6;
+  --gl-sheath: #2b2e34;
+  --gl-hv: #ff6b2c;
+  --gl-hv-hot: #ffb27a;
+  --gl-lamp: #fff1c9;
+  --gl-accent: #ff6b2c;
+  --gl-paper: #0b0c0e;
+
+  --shadow: 0 1px 0 rgba(255,255,255,0.03) inset, 0 20px 60px -20px rgba(0,0,0,0.6);
+}
+
+/* ---------- Vellum (light) ---------- */
+[data-theme="vellum"] {
+  color-scheme: light;
+  --bg: #f2f0ea;
+  --bg-2: #ebe8e0;
+  --surface: #f8f7f3;
+  --surface-2: #ffffff;
+  --glass: rgba(246, 244, 239, 0.8);
+  --rule: rgba(24, 30, 44, 0.1);
+  --rule-2: rgba(24, 30, 44, 0.2);
+  --grid: rgba(24, 30, 44, 0.045);
+  --ink: #161b26;
+  --ink-2: #4a505c;
+  --ink-3: #7b808a;
+  --ink-4: #a8abb1;
+  --hv: #e2531a;
+  --hv-soft: rgba(226, 83, 26, 0.1);
+  --ok: #1f8a55;
+  --warn: #a8760a;
+  --bad: #c43636;
+  --focus: #161b26;
+
+  --bus-can: #1f6fd6;
+  --bus-canfd: #7a4fd8;
+  --bus-flexray: #0f917a;
+  --bus-lin: #a57a06;
+  --bus-eth: #cc2f8a;
+
+  --gl-ink: #1b2231;
+  --gl-ink2: #5d6573;
+  --gl-ink3: #9aa0aa;
+  --gl-tone: #24406a;
+  --gl-sheath: #d8d5cc;
+  --gl-hv: #e2531a;
+  --gl-hv-hot: #ff8a4a;
+  --gl-lamp: #d99a00;
+  --gl-accent: #e2531a;
+  --gl-paper: #f2f0ea;
+
+  --shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 18px 50px -24px rgba(30,30,40,0.28);
+}
