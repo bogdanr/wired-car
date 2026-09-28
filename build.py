@@ -91,6 +91,16 @@ def validate(d: dict, v: dict) -> None:
             if s not in mods:
                 fail(f"LIN slave {s} unknown")
 
+    # schematic: every networked module must have exactly one home row (drawn once)
+    primary = ("can", "canfd", "flexray", "eth")
+    for m in d["modules"]:
+        if m["id"] in (gw, "tester") or not m.get("bus"):
+            continue
+        if not any(b in primary for b in m["bus"]) and m["id"] not in lin_slaves:
+            fail(f"schematic: {m['id']} is only on LIN but is not a slave of any LIN master")
+        if m["id"] in topo.get("localLin", []) and "lin" not in m["bus"]:
+            fail(f"schematic: {m['id']} is listed as localLin but not on LIN")
+
     for f in d["flows"]:
         for end in (f["from"], f["to"]):
             if end not in mods:

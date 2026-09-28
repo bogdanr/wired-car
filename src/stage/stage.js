@@ -92,6 +92,7 @@ export function createStage(container, D, opts = {}) {
 
   /* ---------- theme ---------- */
   const COLORS = {};
+  const WHITE = new THREE.Color(1, 1, 1);
   const cssColor = (name, fb) => {
     const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
     return new THREE.Color(v || fb);
@@ -126,6 +127,20 @@ export function createStage(container, D, opts = {}) {
   scan.set(_p([[new THREE.Vector3(0, -0.02, -Wm), new THREE.Vector3(0, Hm, -Wm), new THREE.Vector3(0, Hm, Wm), new THREE.Vector3(0, -0.02, Wm), new THREE.Vector3(0, -0.02, -Wm)]]));
   scan.group.visible = false;
   sysScene.add(scan.group);
+
+  /* ---------- selection halo: a soft billboard glow that pulses on the selected ECU ---------- */
+  const haloTex = (() => {
+    const c = document.createElement('canvas'); c.width = c.height = 128;
+    const x = c.getContext('2d'), gr = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+    gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.25, 'rgba(255,255,255,0.55)');
+    gr.addColorStop(0.6, 'rgba(255,255,255,0.12)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+    x.fillStyle = gr; x.fillRect(0, 0, 128, 128);
+    return new THREE.CanvasTexture(c);
+  })();
+  const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: haloTex, transparent: true, depthTest: false, depthWrite: false, blending: THREE.AdditiveBlending }));
+  halo.renderOrder = 9; halo.visible = false;
+  sysScene.add(halo);
+  let pulseT = 0;
 
   /* ---------- camera ---------- */
   const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -40, 40);
@@ -194,6 +209,7 @@ export function createStage(container, D, opts = {}) {
     sys: 0, sysGoal: 0,          // systems layer visibility
     ghost: 1, ghostGoal: 1,      // body line strength (1 = full drawing, 0.4 = ghosted)
     studio: 0, studioGoal: 0,    // shaded studio look (1 = paint, 0 = pure drawing)
+    shell: 1, shellGoal: 1,      // body shell presence (0 = body removed, wheels + systems only)
     hidden: true, harness: true, packets: true,
     bus: null, domain: null, selected: null, hover: null,
     comps: new Set()
@@ -210,28 +226,37 @@ export function createStage(container, D, opts = {}) {
     if (st.bus && !(m.bus || []).includes(st.bus) && id !== D.topology.gateway) return true;
     return false;
   }
+  // wheel line sets stay when the shell is removed (they locate the axles); everything else is shell
+  const wheelSets = new Set();
+  body.wheelsRoot.traverse(o => { body.sets.forEach(set => { if (set.group === o) wheelSets.add(set); }); });
   function applyStyles() {
-    const g = st.ghost, s = st.sys, sd = st.studio;
-    body.hullMat.uniforms.uOpacity.value = 0.05 * (0.6 + 0.4 * g) * (1 - sd);
+    const g = st.ghost, s = st.sys, sd = st.studio, sh = st.shell;
+    // selection pulse, 0..1 at ~1.1 Hz (held at 1 with reduced motion)
+    const pulse = reduced ? 1 : 0.5 + 0.5 * Math.sin(pulseT * Math.PI * 2 * 1.1);
+    body.hullMat.uniforms.uOpacity.value = 0.05 * (0.6 + 0.4 * g) * (1 - sd) * sh;
     body.studio.mats.forEach(m => setStudioAlpha(m, sd));
     body.studio.meshes.forEach(o => { o.visible = sd > 0.01; });
     // the procedural hull and tyre tone meshes are invisible but write depth (for the hidden-line
     // pass); under the model they would occlude its paint wherever the two surfaces differ
     const hullOn = !model || sd < 0.01;
-    body.hull.visible = hullOn;
+    // with the shell removed the hull must stop writing depth, or it would still hide far-side lines
+    body.hull.visible = hullOn && sh > 0.01;
     body.wheels.forEach(w => { w.group.children[0].visible = hullOn; });
     // with paint on, the drawing recedes to a faint panel-gap ink; under the model's own
     // surfaces it disappears (its panel gaps are the model's, not the drawing's)
     const lineK = 1 - (model ? 1 : 0.82) * sd;
     body.sets.forEach(set => {
-      set.vis.opacity = set.vis.userData.baseOpacity * (0.34 + 0.66 * g) * lineK;
-      if (set.hid) set.hid.visible = st.hidden && sd < 0.5, set.hid.opacity = 0.26 * (0.5 + 0.5 * g) * (1 - sd);
+      const k = wheelSets.has(set) ? 1 : sh;
+      set.vis.opacity = set.vis.userData.baseOpacity * (0.34 + 0.66 * g) * lineK * k;
+      set.vis.visible = set.vis.opacity > 0.002;
+      if (set.hid) set.hid.visible = st.hidden && sd < 0.5 && k > 0.01, set.hid.opacity = 0.26 * (0.5 + 0.5 * g) * (1 - sd) * k;
     });
     Object.values(body.parts).forEach(p => {
       if (!p.lamp) return;
       const c = COLORS.ink.clone().lerp(COLORS.lamp, p.glow);
       p.set.vis.color.copy(c); p.set.vis.linewidth = 1.15 + p.glow * 1.3;
-      p.set.vis.opacity = Math.min(1, (0.34 + 0.66 * g) * lineK + p.glow * (1 - (model ? sd : 0)) + (model ? 0 : 0.6 * sd));
+      p.set.vis.opacity = Math.min(1, (0.34 + 0.66 * g) * lineK + p.glow * (1 - (model ? sd : 0)) + (model ? 0 : 0.6 * sd)) * sh;
+      p.set.vis.visible = p.set.vis.opacity > 0.002;
     });
     if (model) {
       const P = body.parts, gl = k => (P[k] ? P[k].glow : 0);
@@ -241,11 +266,29 @@ export function createStage(container, D, opts = {}) {
     Object.entries(sys.ecus).forEach(([id, e]) => {
       const faded = modFaded(id), focus = id === sel || id === hov;
       const a = s * (faded ? 0.14 : 1);
+      const isSel = id === sel;
       e.lines.vis.opacity = a * (focus ? 1 : 0.9);
-      e.lines.vis.linewidth = (e.bus === 'gw' ? 1.6 : 1.15) + (focus ? 1.2 : 0);
+      e.lines.vis.linewidth = (e.bus === 'gw' ? 1.6 : 1.15) + (focus ? 1.2 : 0) + (isSel ? 1.4 * pulse : 0);
       // solid housings: nearly opaque, brighter when focused or when the gateway is routing
       e.fill.material.opacity = Math.min(1, a * (focus ? 0.98 : 0.72) + (id === D.topology.gateway ? gwGlow * 0.3 * s : 0));
+      // the selected housing breathes toward white so it stands out from its bus-mates
+      const base = COLORS[e.fill.userData.role] || COLORS.ink;
+      e.fill.material.color.copy(base);
+      e.lines.vis.color.copy(COLORS[e.lines.vis.userData.role] || base);
+      if (isSel) {
+        e.fill.material.color.lerp(COLORS.paper.getHSL({}).l > 0.5 ? COLORS.ink : WHITE, 0.15 + 0.35 * pulse);
+        e.lines.vis.color.lerp(WHITE, 0.5 * pulse);
+      }
     });
+    const se = sel && sys.ecus[sel];
+    halo.visible = !!se && s > 0.05;
+    if (halo.visible) {
+      se.group.getWorldPosition(halo.position);
+      const r = Math.max(...se.size) * 2.6 + 0.12;
+      halo.scale.setScalar(r * (0.85 + 0.35 * pulse));
+      halo.material.color.copy(COLORS[se.fill.userData.role] || COLORS.accent);
+      halo.material.opacity = s * (0.35 + 0.55 * pulse);
+    }
     const wireA = st.harness ? s : 0;
     D.buses.forEach(b => {
       const f = st.bus && st.bus !== b.id ? 0.1 : 1;
@@ -404,7 +447,7 @@ export function createStage(container, D, opts = {}) {
     moves.forEach(m => { const d = goal[m] - cur[m]; if (Math.abs(d) > 1e-4) { cur[m] += d * k; anim = true; } else cur[m] = goal[m]; });
     if (anim) viewChanged = true;
     // layer fades
-    ['sys', 'ghost', 'studio'].forEach(n => { const d = st[n + 'Goal'] - st[n]; if (Math.abs(d) > 0.002) { st[n] += d * (reduced ? 1 : damp(2.6, dt)); anim = true; } else st[n] = st[n + 'Goal']; });
+    ['sys', 'ghost', 'studio', 'shell'].forEach(n => { const d = st[n + 'Goal'] - st[n]; if (Math.abs(d) > 0.002) { st[n] += d * (reduced ? 1 : damp(2.6, dt)); anim = true; } else st[n] = st[n + 'Goal']; });
     // draw-on
     if (draw) {
       const t = clamp((now - draw.t0) / draw.ms, 0, 1), e = 1 - Math.pow(1 - t, 2.2);
@@ -416,6 +459,8 @@ export function createStage(container, D, opts = {}) {
       if (t >= 1) { clipPlane.constant = 10; scan.group.visible = false; draw.res(); draw = null; }
     }
     if (animateParts(dt)) anim = true;
+    // keep ticking while something is selected so its halo pulses
+    if (st.selected && sys.ecus[st.selected] && !reduced && visible) { pulseT += dt; anim = true; }
     // explode: lift the shell clear of the network
     body.root.position.y = cur.explode * 1.1;
     sys.extras.battery.group.position.y = -cur.explode * 0.08;
@@ -546,6 +591,7 @@ export function createStage(container, D, opts = {}) {
     setLayer(name, on) { st[name] = on; invalidate(); },
     setSystems(a) { st.sysGoal = a; invalidate(); },
     setGhost(g) { st.ghostGoal = g; invalidate(); },
+    setShell(on) { st.shellGoal = on ? 1 : 0; invalidate(); },
     setStudio(a) { st.studioGoal = a; if (reduced) st.studio = a; invalidate(); },
     // resolves to { tris, draws } once the licensed body model is in, or null without one
     modelReady, hasModel: HAS_MODEL,

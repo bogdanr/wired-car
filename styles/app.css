@@ -391,27 +391,107 @@ td.num { font-family: var(--font-mono); }
 .why { color: var(--ink-2); max-width: 44ch; }
 
 /* ---------- schematic ---------- */
-.schem { border: 1px solid var(--rule); border-radius: 14px; background: var(--bg-2); padding: 18px 12px; overflow-x: auto; }
-.schem-svg { display: block; margin: 0 auto; width: 100%; min-width: 680px; height: auto; font-family: var(--font-mono); }
-.schem-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; justify-content: flex-end; max-width: 420px; font: 500 .62rem/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-4); }
-.sc-gw rect { fill: var(--surface); stroke: var(--ink-2); stroke-width: 1.2; }
-.sc-gw-t { fill: var(--ink); font-size: 11px; font-weight: 700; letter-spacing: .12em; }
-.sc-gw-s { fill: var(--ink-3); font-size: 9px; letter-spacing: .08em; }
-.sc-port { fill: var(--bg); stroke: var(--c); stroke-width: 1.4; }
-.sc-lane { stroke: var(--c); stroke-width: 1.6; opacity: .75; }
-.sc-lane-t { fill: var(--c); font-size: 9.5px; font-weight: 700; letter-spacing: .06em; }
-.sc-lin-note { fill: var(--bus-lin); font-size: 8px; letter-spacing: .1em; text-transform: uppercase; }
-.sc-sep { stroke: var(--rule-2); stroke-width: 1; }
-.sc-row { cursor: pointer; outline: none; }
-.sc-hit { fill: transparent; }
-.sc-row:hover .sc-hit, .sc-row.hl .sc-hit, .sc-row:focus-visible .sc-hit { fill: var(--surface-2); }
-.sc-no { fill: var(--ink-4); font-size: 9px; }
-.sc-addr { fill: var(--ink-3); font-size: 10px; }
-.sc-lab { fill: var(--ink); font-size: 11px; font-family: var(--font-sans); }
-.sc-stub { stroke: var(--rule-2); stroke-width: 1; }
-.sc-row:hover .sc-stub, .sc-row.hl .sc-stub { stroke: var(--ink-3); }
-.sc-node { fill: var(--c); stroke: var(--bg-2); stroke-width: 2; }
-.sc-node.master { fill: var(--bg-2); stroke: var(--c); stroke-width: 2; }
+.sc-note { margin-top: 10px; font-size: .8rem; color: var(--ink-3) !important; }
+.schem-legend { display: grid; grid-template-columns: repeat(2, auto); gap: 9px 22px; justify-content: end; font: 500 .62rem/1 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); }
+.schem-legend span { display: inline-flex; align-items: center; gap: 9px; white-space: nowrap; }
+.schem-legend svg { width: 24px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.3; color: var(--ink-2); }
+.schem { position: relative; border: 1px solid var(--rule); border-radius: 16px; overflow: hidden;
+  background: radial-gradient(circle at 1px 1px, var(--rule-2) 1px, transparent 1.2px) 0 0 / 20px 20px, var(--bg-2); }
+.sc-bar { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--rule); background: color-mix(in srgb, var(--surface) 70%, transparent); }
+.sc-bar-k { font: 500 .62rem/1 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); }
+.sc-scen { display: flex; flex-wrap: wrap; gap: 6px; }
+.sc-scen button, .sc-stop { height: 28px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--rule-2); font-size: .76rem; font-weight: 500; color: var(--ink-2); transition: background .2s, color .2s, border-color .2s; }
+.sc-scen button:hover { color: var(--ink); border-color: var(--ink-4); }
+.sc-scen button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.sc-stop { margin-left: auto; color: var(--ink); }
+.sc-canvas { padding: 6px 8px 0; }
+.sc-svg { display: block; width: 100%; height: auto; font-family: var(--font-mono); user-select: none; }
+.sc-read { min-height: 52px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 0; padding: 12px 18px; border-top: 1px solid var(--rule); font-size: .84rem; color: var(--ink-2); background: color-mix(in srgb, var(--surface) 70%, transparent); }
+.sc-read strong { color: var(--ink); font-weight: 600; }
+.sc-read .mono { font-size: .76rem; color: var(--ink-3); }
+.sc-read b:not(.mono) { color: var(--ink); }
+.sc-read-r { color: var(--ink-3); }
+.sc-step { font: 500 .66rem/1 var(--font-mono); padding: 4px 7px; border-radius: 5px; background: var(--ink); color: var(--bg); }
+
+/* drawing */
+.sc-veh { fill: none; stroke: var(--ink-4); stroke-width: 1; stroke-dasharray: 6 5; }
+.sc-zone { fill: var(--ink-4); font-size: 9px; letter-spacing: .2em; }
+.sx { transition: opacity .25s; }
+.sc-svg.focus .sx:not(.on) { opacity: .13; }
+.sc-w { fill: none; stroke: var(--c); stroke-linejoin: round; stroke-linecap: round; }
+.sc-spoke { opacity: .85; }
+.sc-diag.sc-off { stroke-dasharray: 3 3; }
+.sc-hit { stroke: transparent; stroke-width: 14; cursor: help; }
+.sc-trunk, .sc-busl, .sc-hub, .sc-term, .sc-ms { cursor: help; }
+.sc-dot { fill: var(--c); stroke: var(--bg-2); stroke-width: 1.5; }
+.sc-term rect { fill: var(--bg-2); stroke: var(--c); stroke-width: 1.2; }
+.sc-term text { fill: var(--ink-3); font-size: 8px; }
+.sc-busn { fill: var(--c); font-size: 10.5px; font-weight: 700; letter-spacing: .05em; }
+.sc-bust { fill: var(--ink-3); font-weight: 400; }
+.sc-busr { fill: var(--ink-3); font-size: 9px; }
+.sc-blk, .sc-flag, .sc-chip { cursor: pointer; outline: none; }
+.sc-blk > rect:first-child { fill: var(--surface); stroke: var(--rule-2); stroke-width: 1; transition: fill .2s, stroke .2s; }
+.sc-blk-tab { fill: var(--c); }
+.sc-blk.slave > rect:first-child { stroke-dasharray: 3 2; }
+.sc-blk.tester > rect:first-child { fill: var(--bg-2); stroke-dasharray: 4 3; stroke: var(--ink-4); }
+.sc-blk:hover > rect:first-child, .sc-blk:focus-visible > rect:first-child, .sc-svg.focus .sc-blk.on > rect:first-child { fill: var(--surface-2); stroke: var(--c); }
+.sc-blk:focus-visible > rect:first-child { stroke-width: 2; }
+.sc-addr { fill: var(--c); font-size: 9.5px; font-weight: 600; }
+.sc-no { fill: var(--ink-4); font-size: 8.5px; }
+.sc-lab { fill: var(--ink); font: 450 10.5px var(--font-sans); }
+.sc-flag path { fill: var(--bg-2); stroke: var(--c); stroke-width: 1.1; }
+.sc-flag text { fill: var(--c); font-size: 8.5px; font-weight: 600; }
+.sc-flag:hover path, .sc-flag:focus-visible path { fill: var(--surface-2); stroke-width: 1.8; }
+.sc-ms circle { fill: var(--bg-2); stroke: var(--c); stroke-width: 1.1; }
+.sc-ms text:not(.sc-busn):not(.sc-busr) { fill: var(--c); font-size: 7px; font-weight: 700; }
+.sc-local line { stroke: var(--c); stroke-width: 1.4; }
+.sc-local text { fill: var(--c); font-size: 8px; letter-spacing: .04em; }
+.sc-chip-body { fill: color-mix(in srgb, var(--surface) 80%, transparent); stroke: var(--ink-3); stroke-width: 1.3; }
+.sc-chip:hover .sc-chip-body, .sc-chip:focus-visible .sc-chip-body { stroke: var(--ink); }
+.sc-chip-k { fill: var(--ink-4); font-size: 8.5px; letter-spacing: .04em; }
+.sc-int { fill: none; stroke: var(--c); stroke-width: 1; stroke-dasharray: 2 3; opacity: .8; }
+.sc-core rect { fill: var(--bg-2); stroke: var(--ink-2); stroke-width: 1.2; transition: stroke .2s, fill .2s; }
+.sc-core-t { fill: var(--ink); font-size: 9.5px; font-weight: 700; letter-spacing: .12em; }
+.sc-core-a { fill: var(--ink-2); font-size: 10px; }
+.sc-core-s { fill: var(--ink-3); font-size: 8.5px; letter-spacing: .06em; }
+.sc-core.busy rect { stroke: var(--hv); fill: var(--hv-soft); animation: sc-busy .5s ease-in-out infinite alternate; }
+@keyframes sc-busy { to { stroke-width: 2.4; } }
+.sc-pin rect { fill: var(--bg-2); stroke: var(--c); stroke-width: 1.3; }
+.sc-pin text { fill: var(--c); font-size: 8.5px; font-weight: 700; letter-spacing: .06em; }
+.sc-hub circle, .sc-hub rect { fill: var(--bg-2); stroke: var(--c); stroke-width: 1.6; }
+.sc-hub line { stroke: var(--c); stroke-width: 1.2; }
+.sc-hub text { fill: var(--c); font-size: 8.5px; font-weight: 600; letter-spacing: .04em; }
+.sc-obd path { fill: var(--bg-2); stroke: var(--ink-2); stroke-width: 1.2; }
+.sc-obd text { fill: var(--ink-3); font-size: 8.5px; letter-spacing: .08em; }
+.sc-obd .sc-diag-t { fill: var(--c); font-size: 8.5px; letter-spacing: .02em; }
+.sc-pk { pointer-events: none; transition: opacity .25s; }
+.sc-pk-c { fill: var(--c); stroke: var(--bg); stroke-width: 1; }
+.sc-pk-h { fill: var(--c); opacity: .28; }
+.sc-path { fill: none; stroke: var(--c); stroke-width: 3.2; stroke-linejoin: round; opacity: .9; }
+
+/* stacked version (narrow screens) */
+.sc-mob { display: none; padding: 14px; gap: 12px; }
+.scm-chip { display: grid; gap: 4px; padding: 14px 16px; border-radius: 12px; border: 1.3px solid var(--ink-3); background: var(--surface); }
+.scm-chip b { font-size: .72rem; color: var(--ink-3); }
+.scm-chip span { font-size: .82rem; color: var(--ink-2); }
+.scm-bus { border: 1px solid var(--rule); border-radius: 12px; background: var(--surface); padding: 12px 14px 8px; }
+.scm-bus header { display: flex; align-items: center; gap: 10px; }
+.scm-bus header i { width: 18px; height: 4px; border-radius: 2px; background: var(--c); }
+.scm-bus header em { margin-left: auto; font: 500 .7rem/1 var(--font-mono); font-style: normal; color: var(--ink-3); }
+.scm-bus p { margin: 6px 0 8px; font-size: .78rem; color: var(--ink-3); }
+.scm-bus ul { list-style: none; margin: 0; padding: 0 0 0 16px; position: relative; }
+.scm-line ul::before { content: ""; position: absolute; left: 4px; top: 4px; bottom: 4px; border-left: 2px double var(--c); width: 4px; border-right: 1px solid var(--c); }
+.scm-line ul::after { content: "120 Ω"; position: absolute; left: -2px; bottom: -8px; font: 500 .52rem/1 var(--font-mono); color: var(--ink-4); }
+.scm-bus li { position: relative; }
+.scm-bus li::before { content: ""; position: absolute; left: -9px; top: 50%; width: 9px; border-top: 1.5px solid var(--c); }
+.scm-star li::after { content: ""; position: absolute; left: -12px; top: calc(50% - 3px); width: 6px; height: 6px; border-radius: 50%; background: var(--c); }
+.scm-star ul::before { content: ""; position: absolute; left: 3px; top: 4px; bottom: 4px; border-left: 1px dashed var(--c); }
+.scm-bus li button, .scm-gw > span { display: grid; grid-template-columns: 58px 1fr auto; align-items: baseline; gap: 8px; width: 100%; padding: 7px 8px; border-radius: 7px; text-align: left; font-size: .82rem; color: var(--ink); }
+.scm-bus li button:hover { background: var(--surface-2); }
+.scm-bus li b { font-size: .68rem; color: var(--c); }
+.scm-bus li small { font: 500 .6rem/1 var(--font-mono); color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; }
+.scm-gw > span { font-weight: 600; background: var(--bg-2); }
+.scm-gw b { color: var(--ink) !important; }
 
 /* ---------- roster ---------- */
 .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: var(--s-5); }
@@ -618,6 +698,9 @@ td.num { font-family: var(--font-mono); }
   .ch-head { gap: var(--s-4); margin-bottom: var(--s-6); }
   .ch-sub { flex-direction: column; align-items: flex-start; }
   .schem-legend { justify-content: flex-start; }
+  .sc-bar, .sc-canvas, .sc-read { display: none; }
+  .sc-mob { display: grid; }
+  .schem { background: var(--bg-2); }
   .chapter { padding: var(--s-8) 0; }
   .matrix { grid-template-columns: 110px 1fr 1fr; font-size: .86rem; }
   .mx-rowh small, .mx-colh small, .mx-corner { display: none; }
@@ -642,7 +725,7 @@ td.num { font-family: var(--font-mono); }
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
 }
 @media print {
-  .bar, .hud, .sheet, .player, .cue, .skip, .palette, .tip { display: none !important; }
+  .bar, .hud, .sheet, .player, .cue, .skip, .palette, .tip, .sc-bar, .sc-read { display: none !important; }
   .stage { position: relative; height: 70vh; margin: 0; break-after: page; }
   .beat { min-height: 0 !important; padding: 24px 0; }
   .beat-text, .beat-text.compact { width: 100%; background: none; border: 0; box-shadow: none; backdrop-filter: none; }

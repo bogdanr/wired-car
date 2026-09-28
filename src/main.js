@@ -75,6 +75,7 @@ function setMode(m) {
   stage.setComponents([]);
   stage.setInsets(insetsFor(m));
   overlay.set({ insets: insetsFor(m) });
+  if (m !== 'explore') stage.setShell(true);   // the Body layer toggle belongs to the explorer only
   switch (m) {
     case 'hero':
       stage.setShot('hero'); stage.setSystems(0); stage.setGhost(1); stage.setStudio(1);
@@ -92,7 +93,7 @@ function setMode(m) {
       ambient(hopFlows, 2, 2200);
       break;
     case 'explore':
-      stage.setStudio(0); stage.setShot(view); stage.setSystems(layers.systems ? 1 : 0); stage.setGhost(view === 'xray' ? 0.3 : layers.body ? 0.55 : 0.1);
+      stage.setStudio(0); stage.setShot(view); stage.setSystems(layers.systems ? 1 : 0); stage.setGhost(view === 'xray' ? 0.3 : 0.55); stage.setShell(layers.body);
       overlay.set({ mode: layers.labels ? 'balloons' : 'dots', ids: null, labelled: null, dims: layers.dims, compIds: [], faded: explorerFaded });
       ambient(D.flows.filter(f => f.kind !== 'power'), 2, 3200);
       break;
@@ -146,7 +147,7 @@ function setView(v) {
   if (mode !== 'explore') return;
   stage.unfocus();
   stage.setShot(v);
-  stage.setGhost(v === 'xray' ? 0.28 : layers.body ? 0.55 : 0.1);
+  stage.setGhost(v === 'xray' ? 0.28 : 0.55);
   if (v === 'xray' || v === 'exploded') { stage.setSystems(1); }
   else stage.setSystems(layers.systems ? 1 : 0);
   $('#tb-view').textContent = viewLabel();
@@ -156,7 +157,7 @@ $('#views').addEventListener('click', e => { const b = e.target.closest('[data-v
 $('#layers').addEventListener('click', e => {
   const b = e.target.closest('[data-layer]'); if (!b) return;
   const k = b.dataset.layer; layers[k] = !layers[k]; b.setAttribute('aria-pressed', String(layers[k]));
-  if (k === 'body') stage.setGhost(layers.body ? 0.55 : 0.1);
+  if (k === 'body') { stage.setShell(layers.body); live(layers.body ? 'Body shown' : 'Body hidden'); }
   if (k === 'hidden') stage.setLayer('hidden', layers.hidden);
   if (k === 'harness') stage.setLayer('harness', layers.harness);
   if (k === 'packets') stage.setLayer('packets', layers.packets);
@@ -217,7 +218,7 @@ addEventListener('pointermove', e => {
     drag.moved += Math.abs(dx) + Math.abs(dy); drag.x = e.clientX; drag.y = e.clientY;
     if (drag.moved > 4) {
       if (!drag.cap) { try { glHost.setPointerCapture(e.pointerId); } catch (_) { /* noop */ } drag.cap = true; stageEl.classList.add('dragging'); }
-      if (drag.pan) stage.pan(dx, dy); else stage.orbit(-dx * 0.32, dy * 0.22);
+      if (drag.pan) stage.pan(dx, dy); else stage.orbit(dx * 0.32, dy * 0.22);   // grab-and-turn: the car follows the pointer
       $('#tb-view').textContent = viewLabel();
       hideTip();
     }
@@ -480,7 +481,7 @@ addEventListener('keydown', e => {
   if (mode === 'explore' && /^[1-8]$/.test(e.key)) { setView(VIEWS[+e.key - 1][0]); return; }
   if (e.key === 'Escape' && selected) { deselect(); return; }
   if (interactive() && document.activeElement === glHost) {
-    const k = { ArrowLeft: [8, 0], ArrowRight: [-8, 0], ArrowUp: [0, 6], ArrowDown: [0, -6] }[e.key];
+    const k = { ArrowLeft: [-8, 0], ArrowRight: [8, 0], ArrowUp: [0, 6], ArrowDown: [0, -6] }[e.key];
     if (k) { e.preventDefault(); stage.orbit(k[0], k[1]); }
     if (e.key === '+' || e.key === '=') stage.zoom(0.85);
     if (e.key === '-') stage.zoom(1.18);

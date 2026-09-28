@@ -167,7 +167,7 @@ export function toneMaterial(o = {}) {
 export function studioMaterial(o = {}) {
   const m = new THREE.ShaderMaterial({
     uniforms: {
-      uPaint: { value: new THREE.Color(o.paint ?? 0x46546a) },
+      uPaint: { value: new THREE.Color(o.paint ?? 0x5e6166) },
       uAlpha: { value: 0 },
       uKind: { value: o.kind ?? -1 },
       uLight: { value: 0 }

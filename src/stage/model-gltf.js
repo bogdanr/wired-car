@@ -26,7 +26,8 @@ import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 export const HAS_MODEL = true;
 
 /* ---------- materials, keyed by the source material name ---------- */
-const PAINT = { graphite: 0x2a3a55, vellum: 0x33445f };
+// neutral metallic grey (the owner's car), not blue
+const PAINT = { graphite: 0x5b5e63, vellum: 0x66696e };
 const SPEC = {
   body:            { kind: 'paint' },
   glasss:          { color: 0x05070a, metalness: 0, roughness: 0.03, clearcoat: 1, opacity: 0.93, glass: true },

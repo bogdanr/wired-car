@@ -166,8 +166,11 @@
     <div class="ch-sub" id="schematic">
       <div>
         <h3>System schematic</h3>
-        <p>The same topology as the drawing, flattened. The gateway is drawn once, with one port per bus.
-        Each module is one row, connected to every bus it is on. LIN starts at its master, not at the gateway.</p>
+        <p>The same network as the drawing, drawn the way an engineer would. CAN and CAN FD are shared,
+        terminated lines; FlexRay and Ethernet are stars that meet inside the gateway; LIN hangs off its master.
+        Hover anything to see what it connects to, or trace a scenario and watch where messages have to stop at the gateway.</p>
+        <p class="sc-note">Module order along each line is front to rear. Termination points and the star coupler and switch
+        inside the gateway are schematic.</p>
       </div>
       <div class="schem-legend" id="schem-legend"></div>
     </div>

@@ -31,6 +31,7 @@ SET = [
     ("inside", (1440, 900), "graphite", "go('inside')", 2600),
     ("router", (1440, 900), "graphite", "go('router')", 2600),
     ("explore", (1440, 900), "graphite", "go('explore')", 2600),
+    ("explore-nobody", (1440, 900), "graphite", "go('explore'); setTimeout(()=>document.querySelector('#layers [data-layer=body]').click(),600)", 3200),
     ("explore-select", (1440, 900), "graphite", "go('explore'); setTimeout(()=>__app.select('0x4076'),600)", 3200),
     ("explore-side", (1440, 900), "graphite", "go('explore'); setTimeout(()=>__app.view('side'),600)", 3200),
     ("explore-plan", (1440, 900), "graphite", "go('explore'); setTimeout(()=>__app.view('plan'),600)", 6400),
@@ -89,7 +90,7 @@ def run(items, full=False):
             # software GL is slow: wait for the body model, then settle the layer fades so the
             # capture shows the resting state, not a frame mid-transition
             pg.evaluate("""async()=>{const s=window.__stage;if(!s)return;await s.modelReady;
-              const st=s.state;['studio','sys','ghost'].forEach(k=>st[k]=st[k+'Goal']);s.invalidate()}""")
+              const st=s.state;['studio','sys','ghost','shell'].forEach(k=>st[k]=st[k+'Goal']);s.invalidate()}""")
             pg.wait_for_timeout(900)
             path = OUT / f"{name}.jpg"
             pg.screenshot(path=str(path), full_page=full, type="jpeg", quality=68)

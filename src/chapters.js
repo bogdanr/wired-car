@@ -6,6 +6,7 @@
    ============================================================ */
 import { BUS_ORDER } from './stage/network.js';
 import { HAS_MODEL } from 'etron-model';
+import { renderSchematic } from './schematic.js';
 
 export const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 export const $ = (s, r = document) => r.querySelector(s);
@@ -162,66 +163,4 @@ export function renderChapters(D, ctx, hooks) {
       <a href="${esc(md.licenseUrl)}" rel="noopener">${esc(md.license)}</a>; simplified and re-materialled for this page. ${esc(md.note)}`;
     cr.hidden = false;
   }
-}
-
-/* ============================================================
-   System schematic — gateway once, one lane per bus, one row per
-   module. LIN starts at its master, not the gateway.
-   ============================================================ */
-function renderSchematic(D, ctx, hooks) {
-  const { BUS, DOM, itemNo } = ctx;
-  const GW = D.topology.gateway;
-  const host = $('#schem');
-  const linMaster = D.topology.lin[0].master;
-  const order = D.domains.map(d => d.id);
-  const mods = D.modules.filter(m => m.id !== GW && m.id !== 'tester' && m.bus && m.bus.length)
-    .sort((a, b) => order.indexOf(a.domain) - order.indexOf(b.domain) || (itemNo[a.id] || 99) - (itemNo[b.id] || 99));
-  const RH = 22, top = 96, labW = 300, laneW = 64, x0 = labW + 30;
-  const W = x0 + laneW * BUS_ORDER.length + 20, H = top + mods.length * RH + 20;
-  const lx = i => x0 + laneW * i + laneW / 2;
-  const rowY = i => top + i * RH + RH / 2;
-  const linRow = mods.findIndex(m => m.id === linMaster);
-  const SHORT = { can: 'CAN', canfd: 'CAN FD', flexray: 'FlexRay', lin: 'LIN', eth: 'Ethernet' };
-  let s = `<svg viewBox="0 0 ${W} ${H}" style="max-width:${Math.round(W * 1.3)}px" class="schem-svg" role="img" aria-label="System schematic: ${mods.length} modules on five buses, all joined at the gateway ${GW}">`;
-  // gateway block with one port per lane
-  s += `<g class="sc-gw"><rect x="${x0 - 8}" y="14" width="${laneW * BUS_ORDER.length + 16}" height="44" rx="6"/><text x="${x0 + 4}" y="32" class="sc-gw-t">GATEWAY ${GW}</text><text x="${x0 + 4}" y="48" class="sc-gw-s">store · check · forward</text></g>`;
-  BUS_ORDER.forEach((b, i) => {
-    const x = lx(i);
-    s += `<text x="${x}" y="80" class="sc-lane-t" data-bus="${b}" text-anchor="middle"><title>${esc(BUS[b].label)}</title>${SHORT[b] || esc(BUS[b].label)}</text>`;
-    if (b === 'lin') {
-      const y0 = rowY(linRow);
-      const slaveRows = mods.map((m, k) => m.bus.includes('lin') ? k : -1).filter(k => k >= 0);
-      const y1 = rowY(Math.max(...slaveRows));
-      s += `<line class="sc-lane" data-bus="${b}" x1="${x}" x2="${x}" y1="${y0}" y2="${y1}"/><text class="sc-lin-note" x="${x}" y="${y0 - 8}" text-anchor="middle">master</text>`;
-    } else {
-      s += `<rect class="sc-port" data-bus="${b}" x="${x - 7}" y="52" width="14" height="10" rx="2"/>`;
-      const last = Math.max(...mods.map((m, k) => m.bus.includes(b) ? k : -1));
-      s += `<line class="sc-lane" data-bus="${b}" x1="${x}" x2="${x}" y1="62" y2="${rowY(last)}"/>`;
-    }
-  });
-  let lastDom = null;
-  mods.forEach((m, i) => {
-    const y = rowY(i);
-    if (m.domain !== lastDom) {
-      lastDom = m.domain;
-      if (i) s += `<line class="sc-sep" x1="0" x2="${W}" y1="${y - RH / 2}" y2="${y - RH / 2}"/>`;
-    }
-    const idx = m.bus.map(b => BUS_ORDER.indexOf(b)).filter(k => k >= 0);
-    const xr = lx(Math.max(...idx));
-    s += `<g class="sc-row" data-id="${esc(m.id)}" tabindex="0" role="button" aria-label="${esc(m.label)}, show on the car">
-      <rect class="sc-hit" x="0" y="${y - RH / 2}" width="${W}" height="${RH}"/>
-      <text class="sc-no" x="18" y="${y}" text-anchor="end" dy=".35em">${itemNo[m.id] || ''}</text>
-      <text class="sc-addr" x="26" y="${y}" dy=".35em">${esc(m.addr || '—')}</text>
-      <text class="sc-lab" x="86" y="${y}" dy=".35em">${esc(m.label.length > 36 ? m.label.slice(0, 34) + '…' : m.label)}</text>
-      <line class="sc-stub" x1="${labW}" x2="${xr}" y1="${y}" y2="${y}"/>
-      ${m.bus.map(b => { const k = BUS_ORDER.indexOf(b); return `<circle class="sc-node${m.id === linMaster && b === 'lin' ? ' master' : ''}" data-bus="${b}" cx="${lx(k)}" cy="${y}" r="${m.id === linMaster && b === 'lin' ? 5 : 3.6}"/>`; }).join('')}
-    </g>`;
-  });
-  s += '</svg>';
-  host.innerHTML = s;
-  $('#schem-legend').innerHTML = D.domains.filter(d => mods.some(m => m.domain === d.id)).map(d => `<span>${esc(DOM[d.id].label)}</span>`).join('');
-  const go = e => { const g = e.target.closest('.sc-row'); if (g) hooks.showModule(g.dataset.id); };
-  host.addEventListener('click', go);
-  host.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(e); } });
-  host.addEventListener('pointerover', e => { const g = e.target.closest('.sc-row'); $$('.sc-row.hl', host).forEach(x => x !== g && x.classList.remove('hl')); if (g) g.classList.add('hl'); });
 }
