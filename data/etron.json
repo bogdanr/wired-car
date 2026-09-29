@@ -2,14 +2,14 @@
  "meta": {
   "title": "The Wired Car",
   "subtitle": "How the 40 computers in an Audi e-tron talk to each other — and to you",
-  "vin": "WAUZZZGE6MB040996",
-  "model": "Audi e-tron (GE), MY2021",
+  "vin": "WAUZZZGE6MB••••••",
+  "model": "Audi e-tron (GE), MY2022",
   "gateway": "0x4010",
   "tester": "0x0E00",
   "doip_ip": "169.254.124.138",
   "scanned": "2026-09-26",
-  "as_of": "2026-09-28",
-  "note": "Positions are inferred from each module's role and the MLB evo layout; the car exposes no physical-location data. Harness routes and bus membership are schematic. Every value is traceable to the sources listed under provenance."
+  "as_of": "2026-09-29",
+  "note": "Positions are inferred from each module's role and the MLB evo layout; the car exposes no physical-location data. Harness routes and bus membership are schematic."
  },
  "domains": [
   {
@@ -239,8 +239,8 @@
   {
    "n": 3,
    "name": "SFD",
-   "detail": "Schutz der Fahrzeugdiagnose — challenge → token, unlocked online.",
-   "blocks": "security access, writes, coding, actuator tests (MY2020+)"
+   "detail": "Schutz der Fahrzeugdiagnose — challenge → token, normally unlocked online. Not enforced on this car: the 0x0600 coding write succeeded with no 0x27 and no SFD token.",
+   "blocks": "security access, writes, coding, actuator tests (MY2020+) — but not the 0x0600 coding write on this car"
   },
   {
    "n": 4,
@@ -1646,26 +1646,6 @@
    "label": "telephone / online (BAP)"
   }
  ],
- "provenance": {
-  "modules": "scans/modules_20260926.json + docs/modules.md §2",
-  "roles": "docs/modules.md §3.3 and docs/architecture.html §6",
-  "domains": "docs/architecture.html §6 (module groups)",
-  "buses": "docs/architecture.html §4–5",
-  "criticality": "docs/architecture.html §7",
-  "access": "docs/architecture.html §8.3",
-  "udsServices": "docs/architecture.html §8.1",
-  "privilegeLadder": "docs/architecture.html §8.2",
-  "diagnosticChain": "docs/findings.md §1.1",
-  "linRearLights": "docs/findings.md §12.2",
-  "bap": "docs/capability-map.md §1",
-  "locations": "INFERRED — location.mm per module, placed from role and the MLB evo layout; no physical-position data exists in the repo (docs/architecture.html footer)",
-  "harness": "SCHEMATIC — harness routes follow typical MLB evo paths; not traced on the car",
-  "topology": "docs/architecture.html §4–5 (FlexRay star coupler and Ethernet switch placed in the gateway: schematic); LIN master from docs/findings.md §12.2",
-  "components": "Physical parts linked to their controlling ECU by role (docs/modules.md §3.3)",
-  "scenarios": "Sequences of existing flows[] only; the tester scenario follows docs/findings.md §1.1",
-  "udsTrace": "docs/findings.md §1.1 and the cluster write sequence (F198/F199 precondition)",
-  "vehicle": "data/vehicle.json — Audi e-tron 55 quattro (GE) published dimensions; body surfaces are a simplified construction drawn to those dimensions"
- },
  "components": [
   {
    "id": "headlamp-l",
@@ -1940,7 +1920,7 @@
     "slaves": [
      "rear-lights"
     ],
-    "basis": "docs/findings.md §12.2 — rear-light ECUs are LIN slaves behind BCM2"
+    "basis": "rear-light ECUs are LIN slaves behind BCM2"
    }
   ],
   "localLin": [
@@ -2658,134 +2638,279 @@
    ]
   }
  ],
+ "udsPhases": [
+  {
+   "id": "connect",
+   "letter": "A",
+   "title": "Connect",
+   "gist": "DoIP to the gateway, then an extended session on the cluster."
+  },
+  {
+   "id": "identify",
+   "letter": "B",
+   "title": "Identify",
+   "gist": "Two free reads name the module.",
+   "repeat": "×40 modules"
+  },
+  {
+   "id": "write",
+   "letter": "C",
+   "title": "Write",
+   "gist": "The coding write is refused."
+  },
+  {
+   "id": "precondition",
+   "letter": "D",
+   "title": "Precondition",
+   "gist": "Write the two service-interval DIDs first.",
+   "noteRef": "note-2",
+   "noteLabel": "Note 2"
+  },
+  {
+   "id": "again",
+   "letter": "E",
+   "title": "Write again",
+   "gist": "Now it is accepted."
+  }
+ ],
  "udsTrace": [
   {
-   "state": "req",
-   "who": "tester",
-   "what": "DoIP routing activation to gateway <b>0x4010</b>",
+   "phase": "connect",
+   "kind": "doip",
+   "dir": "req",
+   "outcome": "none",
+   "bytes": "",
+   "meaning": "DoIP routing activation",
    "note": "TCP 13400 · link up",
+   "say": "The laptop opens a DoIP link on TCP 13400 through the OBD socket. It can only ever talk to the gateway.",
    "from": "tester",
    "to": "0x4010"
   },
   {
-   "state": "ok",
-   "who": "gateway",
-   "what": "routes the request to the addressed ECU",
-   "note": "logical address rewritten",
-   "from": "0x4010",
-   "to": "0x4014"
-  },
-  {
-   "state": "req",
-   "who": "tester → 0x4014",
-   "what": "<b>10 03</b> — DiagnosticSessionControl (extended)",
-   "note": "",
+   "phase": "connect",
+   "kind": "uds",
+   "dir": "req",
+   "outcome": "none",
+   "bytes": "10 03",
+   "meaning": "DiagnosticSessionControl · extended",
+   "say": "Ask the cluster for an extended session. The gateway rewrites the logical address and forwards the request onto CAN.",
    "from": "tester",
-   "to": "0x4014"
+   "to": "0x4014",
+   "gwNote": "address rewritten · DoIP → ISO-TP"
   },
   {
-   "state": "ok",
-   "who": "0x4014 → tester",
-   "what": "<b>50 03</b> 00 32 01 F4 — session accepted",
-   "note": "P2 = 50 ms",
+   "phase": "connect",
+   "kind": "uds",
+   "dir": "resp",
+   "outcome": "positive",
+   "bytes": "50 03 00 32 01 F4",
+   "meaning": "session accepted",
+   "note": "P2 = 50 ms · P2* = 5 s",
    "from": "0x4014",
    "to": "tester"
   },
   {
-   "state": "req",
-   "who": "tester → 0x4014",
-   "what": "<b>22 F187</b> — ReadDataByIdentifier (spare part number)",
-   "note": "",
+   "phase": "identify",
+   "kind": "uds",
+   "dir": "req",
+   "outcome": "none",
+   "bytes": "22 F1 87",
+   "meaning": "ReadDataByIdentifier · spare part number",
+   "say": "Read the spare part number. Identification is free: no key, no token.",
    "from": "tester",
    "to": "0x4014"
   },
   {
-   "state": "ok",
-   "who": "0x4014 → tester",
-   "what": "<b>62 F187</b> 4KE920795D — the cluster answers",
-   "note": "identification, no key needed",
+   "phase": "identify",
+   "kind": "uds",
+   "dir": "resp",
+   "outcome": "positive",
+   "bytes": "62 F1 87",
+   "meaning": "part number",
+   "value": "4KE920795D",
+   "note": "no key needed",
    "from": "0x4014",
    "to": "tester"
   },
   {
-   "state": "req",
-   "who": "tester → 0x4014",
-   "what": "<b>22 F19E</b> — ReadDataByIdentifier (ECU name)",
-   "note": "",
+   "phase": "identify",
+   "kind": "uds",
+   "dir": "req",
+   "outcome": "none",
+   "bytes": "22 F1 9E",
+   "meaning": "ReadDataByIdentifier · ECU name",
+   "say": "Read the ECU name. Repeat these two reads at every address and you have the inventory of all forty modules.",
    "from": "tester",
-   "to": "0x4014"
+   "to": "0x4014",
+   "fold": true
   },
   {
-   "state": "ok",
-   "who": "0x4014 → tester",
-   "what": "<b>62 F19E</b> EV_DashBoardAU65X",
+   "phase": "identify",
+   "kind": "uds",
+   "dir": "resp",
+   "outcome": "positive",
+   "bytes": "62 F1 9E",
+   "meaning": "ECU name",
+   "value": "EV_DashBoardAU65X",
    "note": "this is how all 40 were found",
    "from": "0x4014",
-   "to": "tester"
+   "to": "tester",
+   "fold": true
   },
   {
-   "state": "gate",
-   "who": "tester → 0x4014",
-   "what": "<b>2E 0600</b> — WriteDataByIdentifier (coding block)",
-   "note": "",
+   "phase": "write",
+   "kind": "uds",
+   "dir": "req",
+   "outcome": "none",
+   "bytes": "2E 06 00",
+   "meaning": "WriteDataByIdentifier · coding block",
+   "say": "Try the coding write. The cluster refuses with 0x24, requestSequenceError: something has to happen first.",
    "from": "tester",
    "to": "0x4014"
   },
   {
-   "state": "gate",
-   "who": "0x4014 → tester",
-   "what": "<b>7F 2E 24</b> — requestSequenceError",
+   "phase": "write",
+   "kind": "uds",
+   "dir": "resp",
+   "outcome": "negative",
+   "bytes": "7F 2E 24",
+   "meaning": "requestSequenceError",
    "note": "a precondition is missing",
    "from": "0x4014",
    "to": "tester"
   },
   {
-   "state": "ok",
-   "who": "tester → 0x4014",
-   "what": "<b>2E F198</b> 00 00 00 00 00 2E — service-interval parameter",
-   "note": "",
+   "phase": "precondition",
+   "kind": "uds",
+   "dir": "req",
+   "outcome": "none",
+   "bytes": "2E F1 98 00 00 00 00 00 2E",
+   "meaning": "WriteDataByIdentifier · service-interval parameter",
+   "say": "Write the service-interval parameter F198, in the same extended session.",
    "from": "tester",
    "to": "0x4014"
   },
   {
-   "state": "ok",
-   "who": "0x4014 → tester",
-   "what": "<b>6E F1 98</b> — accepted",
-   "note": "",
+   "phase": "precondition",
+   "kind": "uds",
+   "dir": "resp",
+   "outcome": "positive",
+   "bytes": "6E F1 98",
+   "meaning": "accepted",
    "from": "0x4014",
    "to": "tester"
   },
   {
-   "state": "ok",
-   "who": "tester → 0x4014",
-   "what": "<b>2E F199</b> 26 09 27 — service date",
-   "note": "",
+   "phase": "precondition",
+   "kind": "uds",
+   "dir": "req",
+   "outcome": "none",
+   "bytes": "2E F1 99 26 09 27",
+   "meaning": "WriteDataByIdentifier · service date",
+   "say": "Write the service date F199. Also accepted.",
    "from": "tester",
    "to": "0x4014"
   },
   {
-   "state": "ok",
-   "who": "0x4014 → tester",
-   "what": "<b>6E F1 99</b> — accepted",
-   "note": "",
+   "phase": "precondition",
+   "kind": "uds",
+   "dir": "resp",
+   "outcome": "positive",
+   "bytes": "6E F1 99",
+   "meaning": "accepted",
    "from": "0x4014",
    "to": "tester"
   },
   {
-   "state": "req",
-   "who": "tester → 0x4014",
-   "what": "<b>2E 0600</b> — retry the coding write",
-   "note": "",
+   "phase": "again",
+   "kind": "uds",
+   "dir": "req",
+   "outcome": "none",
+   "bytes": "2E 06 00",
+   "meaning": "WriteDataByIdentifier · coding block, retried",
+   "say": "Retry the coding write, still in the same session. Accepted, then read back to verify. No security access, no SFD token.",
    "from": "tester",
    "to": "0x4014"
   },
   {
-   "state": "ok",
-   "who": "0x4014 → tester",
-   "what": "<b>6E 06 00</b> — accepted, then read back to verify",
+   "phase": "again",
+   "kind": "uds",
+   "dir": "resp",
+   "outcome": "positive",
+   "bytes": "6E 06 00",
+   "meaning": "accepted, then read back to verify",
    "note": "no 0x27, no SFD token",
    "from": "0x4014",
    "to": "tester"
+  }
+ ],
+ "udsSession": {
+  "opener": 2,
+  "label": "extended session · 0x03"
+ },
+ "secrets": [
+  {
+   "id": "precondition",
+   "title": "The coding-write precondition",
+   "secret": "2E 0600 is refused (7F 2E 24) unless F198 and F199 are written first, in the same extended session. No 0x27, no SFD.",
+   "evidence": "The live UDS trace: 7F 2E 24 until F198 and F199 are written in the same session.",
+   "why": "It is the difference between 'the car is locked' and 'the car wants a sequence'."
+  },
+  {
+   "id": "fod-gate",
+   "title": "FoD/SWaP is the real gate for the light features",
+   "secret": "The taillight animation is not a coding bit; it is a Functions-on-Demand licence. A licence, not firmware, was the wall.",
+   "evidence": "The licence read and write on the gateway; the light package appears as an FS-ID, not a coding bit.",
+   "why": "It reframes the project: the feature was not missing, the permission was."
+  },
+  {
+   "id": "fod-record",
+   "title": "The FoD DIDs and the 0x3C00 record format",
+   "secret": "The FS-ID list lives in the FoD DIDs; each 0x3C00 record is FSID:4 + status:1. Status bytes: FF/5F/7F unlocked, DF unlocked+inactive, 32/B2/92 locked.",
+   "evidence": "Reading 0x3C00 on the gateway and decoding each 5-byte record.",
+   "why": "Without the record layout you cannot read or rewrite the licence list."
+  },
+  {
+   "id": "swap-routine",
+   "title": "Session 0x40 + routine 31 01 C001",
+   "secret": "The SWaP activation routine runs in session 0x40; 31 01 C001 activates the written licence.",
+   "evidence": "A session-0x40 probe: 31 01 C001 returns a status record and makes the written licence live.",
+   "why": "The write is only half of it; the activation routine makes it live."
+  },
+  {
+   "id": "fsid-list",
+   "title": "2E 3C01 replaces the whole FS-ID list",
+   "secret": "Writing 3C01 replaces the entire list. A partial list silently drops or deactivates every FS-ID not in it.",
+   "evidence": "Comparing 0x3C00 before and after a 2E 3C01 write.",
+   "why": "A careless write can deactivate features the car already owns."
+  },
+  {
+   "id": "trailer",
+   "title": "The 384-byte trailer is reusable",
+   "secret": "The signature does not bind the FS-ID list; the list is the only variable part, so the embedded 384-byte trailer could be reused.",
+   "evidence": "The same 384-byte trailer reused across five different FS-ID lists.",
+   "why": "It is what made the write possible without a fresh signature."
+  },
+  {
+   "id": "seven-modules",
+   "title": "Seven modules reject raw 0x14",
+   "secret": "0x4013 0x4042 0x4044 0x4076 0x407B 0x407C 0x40B8 reject raw UDS 0x14; they need the ODX-defined clear routine.",
+   "evidence": "A 0x14 clear probe against every address: 33 accept it, these seven answer serviceNotSupported.",
+   "why": "It is the real residual limit — not the animation."
+  },
+  {
+   "id": "dtc-storm",
+   "title": "A licence write produces a transient DTC storm",
+   "secret": "Writing the licence triggers a burst of DTCs with status 0x2E ('all ECUs restarted') until the car settles.",
+   "evidence": "The fault read after the licence write: a burst of status-0x2E DTCs that settles.",
+   "why": "It looks alarming and is expected; knowing it stops you chasing ghosts."
+  },
+  {
+   "id": "payoff",
+   "title": "The payoff",
+   "secret": "Writing the licence (and the routing bit) enabled the taillight animation. The feature runs.",
+   "evidence": "The taillight animation running on the car after the write.",
+   "why": "The goal was achieved by writing, not by waiting for firmware."
   }
  ],
  "accessGroups": [

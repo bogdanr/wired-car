@@ -302,7 +302,8 @@ export function createStage(container, D, opts = {}) {
       D.buses.forEach(b => { sys.wires[b.id].vis.opacity *= 0.45; sys.dropSets[b.id].vis.opacity *= 0.45; });
     }
     sys.sheath.vis.opacity = wireA * 0.9;
-    sys.hv.vis.opacity = s * (st.bus ? 0.25 : 0.62);
+    // the HV cable is part of the harness: the Harness layer toggles it too
+    sys.hv.vis.opacity = wireA * (st.bus ? 0.25 : 0.62);
     BUS_ORDER.forEach(b => { const p = sys.extras['port-' + b]; p.vis.opacity = s * (st.bus && st.bus !== b ? 0.2 : 1); });
     const other = s * (st.bus || st.domain ? 0.35 : 1);
     [sys.extras.diag].forEach(x => { x.vis.opacity = s * 0.7; });

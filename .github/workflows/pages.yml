@@ -1,0 +1,68 @@
+# Build the Wired Car report (build.py) from the committed sources and publish it
+# to Pages.
+#
+# The report is a single self-contained dist/index.html: build.py bundles
+# src/main.js (ES modules + three.js) with esbuild and inlines the CSS, the woff2
+# fonts and the data JSON. No runtime network access, no CDN. Build-time
+# dependencies (esbuild, three.js) are pinned in tools/vendor.py and fetched on
+# first run, so the build needs network but no Node.js.
+#
+# CI only re-renders the page around the committed sources; it never re-derives
+# the data. A copy or CSS change therefore cannot move a published number.
+
+name: Deploy report to Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'styles/**'
+      - 'data/**'
+      - 'assets/**'
+      - 'build.py'
+      - 'tools/**'
+      - 'package.json'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let an in-flight deploy finish rather than cancelling it: a half-published
+# site is worse than a slightly stale one.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Build the report
+        run: python3 build.py
+
+      - id: pages
+        uses: actions/configure-pages@v6
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

@@ -47,6 +47,7 @@ const hopFlows = D.flows.filter(f => f.kind !== 'power' && stage.net.flowPath(f.
    MODES
    ============================================================ */
 let mode = null, ambientTimer = 0, scen = null;
+const DRAWING_LABELS = [{ id: '0x4010', label: 'Gateway' }, { id: '0x404F', label: 'zFAS' }, { id: '0x400E', label: 'Body control' }, { id: '0x407B', label: 'Battery (BECM)' }, { id: '0x40B8', label: 'Rear motor' }];
 const desktop = () => innerWidth >= 900;
 
 function insetsFor(m) {
@@ -76,6 +77,9 @@ function setMode(m) {
   stage.setInsets(insetsFor(m));
   overlay.set({ insets: insetsFor(m) });
   if (m !== 'explore') stage.setShell(true);   // the Body layer toggle belongs to the explorer only
+  // the drawing's own name labels (Gateway, zFAS, Rear motor…) orient the reader in beat 01 only;
+  // from the gateway detail on, ECU balloons carry the naming and the fixed labels would crowd them
+  overlay.set({ press: m === 'xray' ? DRAWING_LABELS : [] });
   switch (m) {
     case 'hero':
       stage.setShot('hero'); stage.setSystems(0); stage.setGhost(1); stage.setStudio(1);
@@ -84,7 +88,7 @@ function setMode(m) {
       break;
     case 'xray':
       stage.setShot('xray'); stage.setSystems(1); stage.setGhost(0.32); stage.setStudio(0);
-      overlay.set({ mode: 'dots', ids: null, dims: false, labelled: null, compIds: [], faded: () => false, press: [{ id: '0x4010', label: 'Gateway' }, { id: '0x404F', label: 'zFAS' }, { id: '0x400E', label: 'Body control' }, { id: '0x407B', label: 'Battery (BECM)' }, { id: '0x40B8', label: 'Rear motor' }] });
+      overlay.set({ mode: 'dots', ids: null, dims: false, labelled: null, compIds: [], faded: () => false });
       ambient(D.flows.filter(f => f.kind !== 'power'), 3, 2600);
       break;
     case 'gateway':
@@ -495,7 +499,7 @@ glHost.setAttribute('aria-label', 'Engineering drawing of the Audi e-tron with i
 /* ============================================================
    CHROME: rail, progress, theme
    ============================================================ */
-const CHAPTERS = [['top', 'Intro'], ['inside', 'Inside'], ['router', 'Gateway'], ['explore', 'Drawing'], ['scenarios', 'In motion'], ['network', 'Network'], ['modules', 'Roster'], ['critical', 'Criticality'], ['uds', 'UDS'], ['story', 'Findings']];
+const CHAPTERS = [['top', 'Intro'], ['inside', 'Inside'], ['router', 'Gateway'], ['explore', 'Drawing'], ['scenarios', 'In motion'], ['network', 'Network'], ['modules', 'Roster'], ['critical', 'Criticality'], ['uds', 'UDS'], ['story', 'Findings'], ['secrets', 'Secrets']];
 $('#rail').innerHTML = CHAPTERS.map(([id, l], i) => `<a href="#${id}" data-sec="${id}"><span class="mono">${String(i).padStart(2, '0')}</span>${esc(l)}</a>`).join('');
 function markRail(id) { $$('#rail a').forEach(a => a.classList.toggle('on', a.dataset.sec === id)); }
 const chObs = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) markRail(e.target.id); }), { rootMargin: '-40% 0px -55% 0px' });

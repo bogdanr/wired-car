@@ -11,3 +11,8 @@ tools/shots/
 __pycache__/
 *.pyc
 .DS_Store
+
+# Editor leftovers: vim writes both alongside the file being edited, so without
+# these they show up as untracked siblings of real source.
+*~
+.*.un~

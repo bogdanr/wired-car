@@ -7,6 +7,7 @@
 import { BUS_ORDER } from './stage/network.js';
 import { HAS_MODEL } from 'etron-model';
 import { renderSchematic } from './schematic.js';
+import { renderTrace } from './trace.js';
 
 export const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 export const $ = (s, r = document) => r.querySelector(s);
@@ -131,36 +132,27 @@ export function renderChapters(D, ctx, hooks) {
   $('#ladder').innerHTML = D.privilegeLadder.map(l => `<li><span class="lad-n">${l.n}</span><div><b>${esc(l.name)}</b><p>${esc(l.detail)}</p><small>unlocks: ${esc(l.blocks)}</small></div></li>`).join('');
 
   /* ---------- sequence diagram of the real exchange ---------- */
-  const lanes = [['tester', 'Tester', 'laptop · DoIP'], [GW, 'Gateway', GW], ['0x4014', 'Cluster', '0x4014']];
-  const col = id => lanes.findIndex(l => l[0] === id);
-  const seq = $('#seq');
-  seq.innerHTML = `<div class="seq-lanes">${lanes.map(l => `<div class="seq-lane"><b>${esc(l[1])}</b><span class="mono">${esc(l[2])}</span></div>`).join('')}</div>
-    <ol class="seq-rows">${D.udsTrace.map((t, i) => {
-      // tester ↔ ECU traffic always crosses the gateway: draw it as two hops
-      let a = col(t.from), b = col(t.to);
-      const through = Math.abs(a - b) === 2;
-      const dir = b > a ? 'r' : 'l';
-      return `<li class="seq-row s-${esc(t.state)}" style="--a:${Math.min(a, b)};--b:${Math.max(a, b)}" data-i="${i}">
-        <span class="seq-t mono">${String(i + 1).padStart(2, '0')}</span>
-        <div class="seq-msg"><span class="seq-what">${t.what}</span>${t.note ? `<span class="seq-note">${esc(t.note)}</span>` : ''}</div>
-        <span class="seq-arrow ${dir}${through ? ' thru' : ''}"><i></i></span></li>`;
-    }).join('')}</ol>`;
+  renderTrace(D, ctx);
 
   /* ---------- footer ---------- */
   const mt = D.meta;
   $('#foot-meta').innerHTML = `<span>${esc(mt.model)}</span><span class="mono">VIN ${esc(mt.vin)}</span><span>Scanned ${esc(mt.scanned)}</span><span>Rev. ${esc(mt.as_of)}</span>`;
-  const provEntries = Object.entries(D.provenance);
-  $('#prov').innerHTML = provEntries.map(([k, v]) => {
-    const tag = /^INFERRED/.test(v) ? 'inferred' : /^SCHEMATIC/.test(v) ? 'schematic' : 'sourced';
-    return `<div class="prov-row ${tag}"><dt>${esc(k.replace(/([A-Z])/g, ' $1').toLowerCase())}</dt><dd><span class="prov-tag">${tag}</span>${esc(String(v).replace(/^(INFERRED|SCHEMATIC) — /, ''))}</dd></div>`;
-  }).join('');
-  // licensed body model (painted look only): the credit its licence requires
-  const md = D.vehicle.model;
-  if (HAS_MODEL && md) {
-    const cr = $('#foot-credit');
-    cr.innerHTML = `<span class="prov-tag">3D model</span> The painted body is based on <a href="${esc(md.url)}" rel="noopener">“${esc(md.title)}”</a>
-      by <a href="${esc(md.authorUrl)}" rel="noopener">${esc(md.author)}</a>, licensed under
-      <a href="${esc(md.licenseUrl)}" rel="noopener">${esc(md.license)}</a>; simplified and re-materialled for this page. ${esc(md.note)}`;
-    cr.hidden = false;
-  }
+
+  /* ---------- the secrets ---------- */
+  renderSecrets(D, ctx, hooks);
+}
+
+/* ---------- secrets: the parts only visible once you write ---------- */
+export function renderSecrets(D, ctx, hooks) {
+  const host = $('#secrets-list');
+  if (!host || !D.secrets) return;
+  host.innerHTML = D.secrets.map((s, i) => `<aside class="drawing-note secret" id="secret-${esc(s.id)}">
+    <span class="dn-tag">${String(i + 1).padStart(2, '0')}</span>
+    <p class="secret-t"><b>${esc(s.title)}</b></p>
+    <p>${esc(s.secret)}</p>
+    <dl class="secret-meta">
+      <div><dt>Evidence</dt><dd>${esc(s.evidence)}</dd></div>
+      <div><dt>Why it matters</dt><dd>${esc(s.why)}</dd></div>
+    </dl>
+  </aside>`).join('');
 }

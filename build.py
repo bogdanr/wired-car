@@ -144,10 +144,62 @@ def validate(d: dict, v: dict) -> None:
             for c in st.get("components", []):
                 if c not in comps:
                     fail(f"scenario {s['id']} step {i}: unknown component {c}")
-    for t in d["udsTrace"]:
+    # UDS trace: phases, request/response pairing and the SID arithmetic of ISO 14229
+    phases = [p["id"] for p in d["udsPhases"]]
+    if len(phases) != len(set(phases)):
+        fail("udsPhases: duplicate phase id")
+    trace = d["udsTrace"]
+    seen_phases = []
+    for i, t in enumerate(trace):
+        where = f"udsTrace[{i}]"
         for e in (t["from"], t["to"]):
             if e not in mods:
-                fail(f"udsTrace references unknown module {e}")
+                fail(f"{where} references unknown module {e}")
+        if t["phase"] not in phases:
+            fail(f"{where}: unknown phase {t['phase']}")
+        if not seen_phases or seen_phases[-1] != t["phase"]:
+            if t["phase"] in seen_phases:
+                fail(f"{where}: phase {t['phase']} is not contiguous")
+            seen_phases.append(t["phase"])
+        if t["dir"] not in ("req", "resp"):
+            fail(f"{where}: dir must be req/resp")
+        if t["outcome"] not in (("none",) if t["dir"] == "req" else ("positive", "negative")):
+            fail(f"{where}: outcome {t['outcome']} is not valid for a {t['dir']}")
+        if t["kind"] not in ("uds", "doip"):
+            fail(f"{where}: kind must be uds/doip")
+        by = t["bytes"].split()
+        if any(len(b) != 2 or any(c not in "0123456789ABCDEF" for c in b) for b in by):
+            fail(f"{where}: bytes must be upper-case hex pairs separated by single spaces: {t['bytes']!r}")
+        if t["kind"] == "uds" and not by:
+            fail(f"{where}: a UDS message needs bytes")
+        if t["dir"] == "req" and t["kind"] == "uds" and not t.get("say"):
+            fail(f"{where}: every request needs a 'say' caption for the stepper")
+        if t["dir"] == "resp":
+            q = trace[i - 1] if i else None
+            if not q or q["dir"] != "req" or q["kind"] != "uds":
+                fail(f"{where}: a response must directly follow its UDS request")
+            if (q["from"], q["to"]) != (t["to"], t["from"]):
+                fail(f"{where}: response endpoints do not mirror the request")
+            if q["phase"] != t["phase"] or bool(q.get("fold")) != bool(t.get("fold")):
+                fail(f"{where}: a request and its response must share phase and fold")
+            rq, rs = q["bytes"].split(), by
+            sid = int(rq[0], 16)
+            if t["outcome"] == "negative":
+                if rs[0] != "7F" or len(rs) != 3 or int(rs[1], 16) != sid:
+                    fail(f"{where}: negative response must be 7F <request SID> <NRC>")
+            else:
+                if int(rs[0], 16) != sid + 0x40:
+                    fail(f"{where}: positive response SID {rs[0]} is not request SID {rq[0]} + 0x40")
+                # the echoed sub-function / DID must match the request
+                echo = {0x10: 1, 0x22: 2, 0x2E: 2}.get(sid, 0)
+                if rs[1:1 + echo] != rq[1:1 + echo]:
+                    fail(f"{where}: response does not echo the request's {' '.join(rq[1:1 + echo])}")
+        elif t["kind"] == "uds" and (i + 1 >= len(trace) or trace[i + 1]["dir"] != "resp"):
+            fail(f"{where}: UDS request has no response")
+    s = d["udsSession"]
+    op = trace[s["opener"]] if 0 <= s["opener"] < len(trace) else None
+    if not op or op["dir"] != "resp" or op["bytes"].split()[:2] != ["50", "03"]:
+        fail("udsSession.opener must point at the positive 50 03 response")
 
     dims = v["dimensions"]
     if dims["length"] - dims["wheelbase"] - dims["frontOverhang"] <= 0:
