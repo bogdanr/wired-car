@@ -712,9 +712,9 @@ td.num { font-family: var(--font-mono); }
 .secret-meta dd { margin: 0; font-size: var(--t-small); color: var(--ink-2); line-height: 1.5; }
 
 /* ---------- footer ---------- */
-.foot { position: relative; z-index: 3; background: var(--bg-2); border-top: 1px solid var(--rule); padding: var(--s-8) 0 var(--s-9); }
+.foot { position: relative; z-index: 3; background: var(--bg-2); border-top: 1px solid var(--rule); padding: var(--s-8) 0 0; }
 .foot-head { display: grid; grid-template-columns: 1.4fr 1fr; gap: var(--s-7); align-items: end; margin-bottom: var(--s-7); }
-.foot-lede { color: var(--ink-2); max-width: 60ch; }
+.foot-lede { color: var(--ink-2); max-width: 70ch; }
 .foot-meta { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px 18px; font: 500 .7rem/1.4 var(--font-mono); color: var(--ink-3); }
 .foot-credit { margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--rule); max-width: 88ch; font-size: .8rem; line-height: 1.55; color: var(--ink-3); }
 .foot-credit a { color: var(--ink-2); text-underline-offset: 2px; }

@@ -137,6 +137,12 @@ export function renderChapters(D, ctx, hooks) {
   /* ---------- footer ---------- */
   const mt = D.meta;
   $('#foot-meta').innerHTML = `<span>${esc(mt.model)}</span><span class="mono">VIN ${esc(mt.vin)}</span><span>Scanned ${esc(mt.scanned)}</span><span>Rev. ${esc(mt.as_of)}</span>`;
+  const vm = D.vehicle && D.vehicle.model;
+  const credit = $('#foot-credit');
+  if (vm && credit && vm.author) {
+    credit.hidden = false;
+    credit.innerHTML = `Body model: <a href="${esc(vm.url)}" rel="noopener noreferrer">${esc(vm.title)}</a> by <a href="${esc(vm.authorUrl)}" rel="noopener noreferrer">${esc(vm.author)}</a> — ${esc(vm.license)}.`;
+  }
 
   /* ---------- the secrets ---------- */
   renderSecrets(D, ctx, hooks);

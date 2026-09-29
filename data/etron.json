@@ -1381,7 +1381,7 @@
     "side": "L",
     "zone": "outside",
     "confidence": "high",
-    "basis": "Outside the car. A laptop plugged into the OBD socket in the driver footwell, talking DoIP over the socket's Ethernet pins."
+    "basis": "Outside the car. A laptop plugged into the OBD socket in the driver footwell, talking dOip OVER THE SOCKET'S eTHErnet pins."
    }
   }
  ],
@@ -2869,31 +2869,31 @@
   },
   {
    "id": "fod-record",
-   "title": "The FoD DIDs and the 0x3C00 record format",
-   "secret": "The FS-ID list lives in the FoD DIDs; each 0x3C00 record is FSID:4 + status:1. Status bytes: FF/5F/7F unlocked, DF unlocked+inactive, 32/B2/92 locked.",
-   "evidence": "Reading 0x3C00 on the gateway and decoding each 5-byte record.",
-   "why": "Without the record layout you cannot read or rewrite the licence list."
+   "title": "The car keeps a list of its feature licences",
+   "secret": "The gateway holds the car's feature licences as a list, each with a state: locked, unlocked, or unlocked-but-inactive. I read that list to see what the car had.",
+   "evidence": "Reading the licence list on the gateway.",
+   "why": "It shows the light functions are licensed features, not just coding."
   },
   {
    "id": "swap-routine",
-   "title": "Session 0x40 + routine 31 01 C001",
-   "secret": "The SWaP activation routine runs in session 0x40; 31 01 C001 activates the written licence.",
-   "evidence": "A session-0x40 probe: 31 01 C001 returns a status record and makes the written licence live.",
-   "why": "Writing the licence is only half the job. The activation routine is what brings it to life."
+   "title": "A written licence also has to be activated",
+   "secret": "Writing the licence is only half of it; the car also has to be told to activate it. The exact session and routine are part of what I am not publishing.",
+   "evidence": "Withheld.",
+   "why": "It explains why a licence write alone is not enough."
   },
   {
    "id": "fsid-list",
-   "title": "2E 3C01 replaces the whole FS-ID list",
-   "secret": "Writing 3C01 replaces the entire list. A partial list silently drops or deactivates every FS-ID not in it.",
-   "evidence": "Comparing 0x3C00 before and after a 2E 3C01 write.",
-   "why": "A careless write can deactivate features the car already owns."
+   "title": "The licence list is written as a whole",
+   "secret": "The licence list is written as a set, not one entry at a time, so a careless write can drop features the car already owns. The exact mechanism is part of what I am not publishing.",
+   "evidence": "Withheld.",
+   "why": "It is why a partial write is risky."
   },
   {
    "id": "trailer",
-   "title": "The 384-byte trailer is reusable",
-   "secret": "The signature does not bind the FS-ID list; the list is the only variable part, so the embedded 384-byte trailer could be reused.",
-   "evidence": "The same 384-byte trailer reused across five different FS-ID lists.",
-   "why": "This is why the write could be made without asking the vendor for a fresh signature."
+   "title": "The one finding I am not publishing",
+   "secret": "There is a way the car's paid light functions get switched on. I worked out how the licence is written and activated, but I am not describing it here: it is a vendor-signed, paid feature, and I don't want troubles. If you want the feature, buy it from Audi.",
+   "evidence": "Withheld on purpose.",
+   "why": "This is a teardown of how the car is wired, not a way around the vendor's licensing."
   },
   {
    "id": "seven-modules",
