@@ -1,5 +1,5 @@
 /* ============================================================
-   Chapters — the report below the stage
+   Chapters: the report below the stage
    ------------------------------------------------------------
    Pure DOM rendering from the dataset. Nothing here draws the
    car; rows and chips call back into the stage via `hooks`.
@@ -14,10 +14,10 @@ export const $ = (s, r = document) => r.querySelector(s);
 export const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 
 export const CRIT = {
-  critical: { label: 'Critical', long: 'Critical — safety', ticks: 4 },
-  high: { label: 'High', long: 'High — functional safety', ticks: 3 },
-  medium: { label: 'Medium', long: 'Medium — functional', ticks: 2 },
-  low: { label: 'Low', long: 'Low — comfort', ticks: 1 }
+  critical: { label: 'Critical', long: 'Critical (safety)', sub: 'safety', ticks: 4 },
+  high: { label: 'High', long: 'High (functional safety)', sub: 'functional safety', ticks: 3 },
+  medium: { label: 'Medium', long: 'Medium (functional)', sub: 'functional', ticks: 2 },
+  low: { label: 'Low', long: 'Low (comfort)', sub: 'comfort', ticks: 1 }
 };
 export const CRIT_ORDER = ['critical', 'high', 'medium', 'low'];
 
@@ -113,7 +113,7 @@ export function renderChapters(D, ctx, hooks) {
   const acc = ['read+write', 'read-only'];
   $('#matrix').innerHTML = `<div class="mx-corner"><span>Criticality</span><span>Access →</span></div>` +
     acc.map(a => `<div class="mx-colh">${a === 'read-only' ? 'Read only' : 'Read + write'}<small>${a === 'read-only' ? 'writing refused or never attempted' : 'extended session, some behind SFD'}</small></div>`).join('') +
-    CRIT_ORDER.map(c => `<div class="mx-rowh">${critTicks(c)}<b>${esc(CRIT[c].label)}</b><small>${esc(CRIT[c].long.split('— ')[1])}</small></div>` +
+    CRIT_ORDER.map(c => `<div class="mx-rowh">${critTicks(c)}<b>${esc(CRIT[c].label)}</b><small>${esc(CRIT[c].sub)}</small></div>` +
       acc.map(a => {
         const ms = D.modules.filter(m => m.criticality === c && m.access === a && m.id !== 'tester');
         return `<div class="mx-cell${ms.length ? '' : ' empty'}" data-c="${c}" data-a="${a}"><span class="mx-n">${ms.length}</span><div class="mx-chips">${ms.map(m => `<button type="button" data-id="${esc(m.id)}" data-bus="${esc((m.bus && m.bus[0]) || 'none')}" title="${esc(m.label)}"><i></i>${esc(m.addr || m.label)}</button>`).join('')}</div></div>`;
@@ -142,7 +142,7 @@ export function renderChapters(D, ctx, hooks) {
   renderSecrets(D, ctx, hooks);
 }
 
-/* ---------- secrets: the parts only visible once you write ---------- */
+/* ---------- findings: what only showed up once I wrote to the car ---------- */
 export function renderSecrets(D, ctx, hooks) {
   const host = $('#secrets-list');
   if (!host || !D.secrets) return;
@@ -151,7 +151,7 @@ export function renderSecrets(D, ctx, hooks) {
     <p class="secret-t"><b>${esc(s.title)}</b></p>
     <p>${esc(s.secret)}</p>
     <dl class="secret-meta">
-      <div><dt>Evidence</dt><dd>${esc(s.evidence)}</dd></div>
+      <div><dt>Evidence</dt><dd>${esc(s.evidence)}${s.see ? ` <a class="dn-back" href="${esc(s.see.href)}">${esc(s.see.label)}</a>` : ''}</dd></div>
       <div><dt>Why it matters</dt><dd>${esc(s.why)}</dd></div>
     </dl>
   </aside>`).join('');

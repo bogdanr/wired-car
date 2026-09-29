@@ -1,5 +1,5 @@
 /* ============================================================
-   The Wired Car — page app
+   The Wired Car: page app
    ------------------------------------------------------------
    One stage (WebGL drawing + SVG annotation), pinned while the
    story beats scroll over it. Each beat sets a stage "mode":
@@ -52,7 +52,7 @@ const desktop = () => innerWidth >= 900;
 
 function insetsFor(m) {
   const W = stageEl.clientWidth, H = stageEl.clientHeight, bar = 64;
-  if (!desktop()) return m === 'explore' ? { l: 0, r: 0, t: 56, b: 60 } : m === 'scenarios' ? { l: 0, r: 0, t: 56, b: 150 } : { l: 0, r: 0, t: 12, b: 12 };
+  if (!desktop()) return m === 'explore' ? { l: 0, r: 0, t: 100, b: 60 } : m === 'scenarios' ? { l: 0, r: 0, t: 100, b: 150 } : { l: 0, r: 0, t: 56, b: 12 };
   const text = Math.min(560, W * 0.4);
   switch (m) {
     case 'hero': return { l: text, r: 40, t: bar + 20, b: 110 };
@@ -245,9 +245,21 @@ addEventListener('pointerup', e => {
   }
 });
 glHost.addEventListener('contextmenu', e => { if (interactive()) e.preventDefault(); });
+/* the wheel scrolls the page unless a modifier is held; say so the first few times it happens */
+const zoomHint = $('#zoom-hint');
+let zoomHintT = 0, zoomHintLeft = 3;
 glHost.addEventListener('wheel', e => {
-  if (!interactive() || !(e.ctrlKey || e.metaKey || document.fullscreenElement)) return;
-  e.preventDefault(); stage.zoom(Math.exp(e.deltaY * 0.0022));
+  if (!interactive()) return;
+  if (!(e.ctrlKey || e.metaKey || document.fullscreenElement)) {
+    if (desktop() && zoomHintLeft > 0 && Math.abs(e.deltaY) > 4) {
+      if (!zoomHint.classList.contains('on')) zoomHintLeft--;
+      zoomHint.classList.add('on'); clearTimeout(zoomHintT);
+      zoomHintT = setTimeout(() => zoomHint.classList.remove('on'), 1400);
+    }
+    return;
+  }
+  e.preventDefault(); zoomHint.classList.remove('on'); zoomHintLeft = 0;
+  stage.zoom(Math.exp(e.deltaY * 0.0022));
 }, { passive: false });
 
 function hoverModule(id, _src, e) {
@@ -259,7 +271,11 @@ function hoverModule(id, _src, e) {
   const p = n && n.p ? n.p : null;
   const r = stageEl.getBoundingClientRect(), g = glHost.getBoundingClientRect();
   const x = e ? e.clientX - r.left : p ? p.x + g.left - r.left : 0, y = e ? e.clientY - r.top : p ? p.y + g.top - r.top : 0;
-  tip.style.transform = `translate(${Math.min(r.width - 280, x + 16)}px, ${y + 14}px)`;
+  // keep the tip inside the drawing: flip left of / above the pointer near the right and bottom edges
+  const tw = tip.offsetWidth, th = tip.offsetHeight, pad = 8;
+  const tx = x + 16 + tw > r.width - pad ? Math.max(pad, x - 16 - tw) : x + 16;
+  const ty = y + 14 + th > r.height - pad ? Math.max(pad, y - 14 - th) : y + 14;
+  tip.style.transform = `translate(${tx}px, ${ty}px)`;
   stageEl.classList.toggle('pointing', true);
 }
 function hideTip() { tip.hidden = true; stageEl.classList.remove('pointing'); }
@@ -283,6 +299,7 @@ function selectModule(id, opts = {}) {
   stage.setComponents(stage.compOf[id] || []);
   overlay.set({ compIds: stage.compOf[id] || [] });
   renderSheet();
+  if (!desktop()) $('#sheet').classList.add('open');   // mobile: reveal the inspector the tap asked for
   $('#tb-view').textContent = viewLabel();
   live(`${m.label}${m.addr ? ', ' + m.addr : ''} selected. ${fl.length} flows.`);
 }
@@ -360,9 +377,12 @@ $('#sheet-grip').addEventListener('click', () => $('#sheet').classList.toggle('o
 /* ============================================================
    SCENARIOS
    ============================================================ */
-const STEP_MS = 5600;
+/* each step stays up long enough to read its caption (about 3.5 words a second, plus time to watch the drawing) */
+const words = h => String(h || '').replace(/<[^>]+>/g, ' ').trim().split(/\s+/).filter(Boolean).length;
+const stepMs = st => Math.round(Math.min(12000, Math.max(4500, 1500 + words(st.caption) * 280)));
 $('#scen-tabs').innerHTML = D.scenarios.map((s, i) => `<button type="button" role="tab" data-scen="${s.id}" aria-selected="false"><span class="mono">${String(i + 1).padStart(2, '0')}</span>${esc(s.title)}</button>`).join('');
 let scenTimer = 0, playing = !reducedMotion;
+let stepDur = 0, remain = 0, tStart = 0, held = false;   // held: the reader is hovering or using the player
 function startScenario(id, step = 0, instant) {
   const s = D.scenarios.find(x => x.id === id);
   scen = { s, i: step };
@@ -382,23 +402,34 @@ function showStep(instant) {
   stage.setComponents(st.components || []);
   overlay.set({ mode: 'balloons', ids, labelled: ids, compIds: st.components || [], faded: () => false, selected: null });
   $('#scen-count').innerHTML = `<b>${esc(s.title)}</b><span>Step ${i + 1} / ${s.steps.length}</span>`;
-  $('#scen-caption').innerHTML = st.caption;
+  // on the last step, offer the next scenario instead of switching to it unasked
+  const last = i === s.steps.length - 1, nxt = D.scenarios[(D.scenarios.indexOf(s) + 1) % D.scenarios.length];
+  $('#scen-caption').innerHTML = st.caption + (last ? `<br><button type="button" class="scen-offer" data-scen="${esc(nxt.id)}">Next: ${esc(nxt.title)} <span aria-hidden="true">→</span></button>` : '');
   $('#scen-caption').classList.remove('in'); void $('#scen-caption').offsetWidth; $('#scen-caption').classList.add('in');
-  $$('#scen-bar button').forEach((b, k) => { b.classList.toggle('done', k < i); b.classList.toggle('now', k === i); b.style.setProperty('--dur', STEP_MS + 'ms'); });
+  stepDur = remain = stepMs(st);
+  $$('#scen-bar button').forEach((b, k) => { b.classList.toggle('done', k < i); b.classList.toggle('now', k === i); b.style.setProperty('--dur', stepDur + 'ms'); });
   $('#tb-view').textContent = viewLabel();
   schedule();
 }
 function schedule() {
-  clearTimeout(scenTimer);
+  clearTimeout(scenTimer); scenTimer = 0;
   $('#player').classList.toggle('paused', !playing);
+  $('#player').classList.toggle('held', playing && held);
   $('#scen-play').setAttribute('aria-pressed', String(playing));
   $('#scen-play').setAttribute('aria-label', playing ? 'Pause' : 'Play');
-  if (playing && scen) scenTimer = setTimeout(() => nextStep(true), STEP_MS);
+  if (playing && scen && !held) { tStart = performance.now(); scenTimer = setTimeout(() => nextStep(true), remain); }
+}
+/* (re)start playback: the progress bar restarts from zero, so the timer does too */
+function play() { playing = true; remain = stepDur; schedule(); }
+function setHeld(on) {
+  if (on === held) return;
+  if (on && scenTimer) remain = Math.max(800, remain - (performance.now() - tStart));
+  held = on; schedule();
 }
 function nextStep(auto) {
   if (!scen) return;
   if (scen.i < scen.s.steps.length - 1) scen.i++;
-  else if (auto) { const k = D.scenarios.indexOf(scen.s); startScenario(D.scenarios[(k + 1) % D.scenarios.length].id); return; }
+  else if (auto) { playing = false; schedule(); live(`${scen.s.title} finished.`); return; }
   showStep();
 }
 function prevStep() { if (scen && scen.i > 0) { scen.i--; showStep(); } }
@@ -408,10 +439,32 @@ $('#scen-tabs').addEventListener('click', e => { const b = e.target.closest('[da
 $('#scen-bar').addEventListener('click', e => { const b = e.target.closest('[data-step]'); if (b && scen) { scen.i = +b.dataset.step; showStep(); } });
 $('#scen-next').onclick = () => nextStep(false);
 $('#scen-prev').onclick = prevStep;
-$('#scen-play').onclick = () => { playing = !playing; if (playing && scen && scen.i === scen.s.steps.length - 1) scen.i = -1, nextStep(); else schedule(); };
+$('#scen-play').onclick = () => {
+  if (playing) { playing = false; schedule(); return; }
+  if (scen && scen.i === scen.s.steps.length - 1) { playing = true; scen.i = 0; showStep(); return; }
+  play();
+};
+$('#scen-caption').addEventListener('click', e => { const b = e.target.closest('.scen-offer'); if (b) { playing = !reducedMotion; startScenario(b.dataset.scen); } });
+/* hold the step while the pointer rests on the player or the keyboard is inside it */
+const playerEl = $('#player');
+let hoverHold = false, focusHold = false;
+const syncHold = () => setHeld(hoverHold || focusHold);
+playerEl.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') { hoverHold = true; syncHold(); } });
+playerEl.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') { hoverHold = false; syncHold(); } });
+playerEl.addEventListener('focusin', e => { focusHold = e.target.matches(':focus-visible'); syncHold(); });
+playerEl.addEventListener('focusout', e => { if (!playerEl.contains(e.relatedTarget)) { focusHold = false; syncHold(); } });
+
+/* pause the player while it is scrolled out of view; resume only if it was playing */
+let scenResume = false;
+new IntersectionObserver(es => {
+  const e = es[0];
+  if (mode !== 'scenarios') return;
+  if (!e.isIntersecting) { if (playing) { scenResume = true; pauseScenario(); } }
+  else if (scenResume) { scenResume = false; play(); }
+}, { threshold: 0 }).observe($('#player'));
 
 /* ============================================================
-   TITLE BLOCK — live view name and true drawing scale
+   TITLE BLOCK: live view name and true drawing scale
    ============================================================ */
 function viewLabel() {
   if (selected) return 'Detail · ' + (MOD[selected].addr || MOD[selected].label);
@@ -430,7 +483,7 @@ stage.onFrame(() => {
 });
 
 /* ============================================================
-   PALETTE (⌘K)
+   PALETTE (⌘K / Ctrl K)
    ============================================================ */
 const pal = $('#palette'), palQ = $('#pal-q'), palList = $('#pal-list');
 let palSel = 0, palItems = [];
@@ -458,20 +511,63 @@ palList.addEventListener('click', e => { const li = e.target.closest('li[data-id
 pal.addEventListener('click', e => { if (e.target === pal) pal.close(); });
 $('#open-find').onclick = openPalette;
 
+/* show the platform-correct shortcut on the Find button */
+const isMac = /Mac|iPhone|iPad|iPod/i.test(navigator.userAgentData?.platform || navigator.platform || navigator.userAgent);
+$('#find-kbd').textContent = isMac ? '⌘K' : 'Ctrl K';
+$$('.mod-key').forEach(k => { k.textContent = isMac ? '⌘' : 'Ctrl'; });
+
+/* ---------- return pill ----------
+   Rows, chips and links further down the page jump up to the drawing. Remember where the reader
+   was, and offer one click back once they arrive. */
+const RETURN_NAMES = { network: 'the network', modules: 'the roster', critical: 'criticality', uds: 'the exchange', story: 'the findings' };
+const pill = $('#return-pill');
+let back = null;
+function rememberSpot() {
+  const mid = innerHeight / 2;
+  const ch = $$('.chapter').find(c => { const r = c.getBoundingClientRect(); return r.top <= mid && r.bottom >= mid; });
+  if (!ch) { back = null; return; }   // already up in the story: nothing to go back to
+  back = { y: scrollY, el: document.activeElement, armed: false };
+  pill.querySelector('span').textContent = `Back to ${RETURN_NAMES[ch.id] || 'where you were'}`;
+}
+function offerReturn() { if (back) { back.armed = true; pill.classList.add('on'); } }
+function dropReturn() { back = null; pill.classList.remove('on'); }
+pill.onclick = () => {
+  if (!back) return;
+  const b = back; dropReturn();
+  scrollTo({ top: b.y, behavior: reducedMotion ? 'auto' : 'smooth' });
+  if (b.el && b.el !== document.body && b.el.focus) setTimeout(() => b.el.focus({ preventScroll: true }), reducedMotion ? 0 : 700);
+};
+/* the reader went back by themselves: the pill has done its job */
+addEventListener('scroll', () => { if (back && back.armed && Math.abs(scrollY - back.y) < innerHeight * 0.5) dropReturn(); }, { passive: true });
+addEventListener('keydown', e => { if (e.key === 'Escape' && back && !selected) dropReturn(); });
+
+/* run fn once a programmatic scroll has settled. The sections carry a scroll-margin under the top bar,
+   so "settled" means the position stopped changing, not that the target reached y = 0. */
+function afterScroll(fn) {
+  let last = scrollY, still = 0, t = 0;
+  const poll = () => {
+    const y = scrollY; still = Math.abs(y - last) < 1 ? still + 1 : 0; last = y;
+    if ((still >= 3 && t > 3) || ++t > 60) fn(); else setTimeout(poll, 50);
+  };
+  setTimeout(poll, 50);
+}
+
 /* go to the explorer and show a module there (from anywhere on the page) */
 function showModule(id) {
   const ex = $('#explore');
   const go = () => { setMode('explore'); markRail('explore'); selectModule(id, { fromOutside: true }); };
   const r = ex.getBoundingClientRect();
   if (Math.abs(r.top) < innerHeight * 0.4 && mode === 'explore') { go(); return; }
+  rememberSpot();
   ex.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
-  // wait until the scroll settles, then select (the beat observer switches the mode on the way)
-  let t = 0; const wait = () => { const rr = ex.getBoundingClientRect(); if (Math.abs(rr.top) < 4 || t++ > 90) go(); else requestAnimationFrame(wait); }; requestAnimationFrame(wait);
+  // select once the scroll settles (the beat observer switches the mode on the way)
+  afterScroll(() => { go(); offerReturn(); });
 }
 function showBus(b) {
   const ex = $('#explore');
+  rememberSpot();
   ex.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
-  let t = 0; const wait = () => { if (Math.abs(ex.getBoundingClientRect().top) < 4 || t++ > 90) { setMode('explore'); filterBus(b); } else requestAnimationFrame(wait); }; requestAnimationFrame(wait);
+  afterScroll(() => { setMode('explore'); filterBus(b); offerReturn(); });
 }
 
 /* ============================================================
@@ -499,7 +595,7 @@ glHost.setAttribute('aria-label', 'Engineering drawing of the Audi e-tron with i
 /* ============================================================
    CHROME: rail, progress, theme
    ============================================================ */
-const CHAPTERS = [['top', 'Intro'], ['inside', 'Inside'], ['router', 'Gateway'], ['explore', 'Drawing'], ['scenarios', 'In motion'], ['network', 'Network'], ['modules', 'Roster'], ['critical', 'Criticality'], ['uds', 'UDS'], ['story', 'Findings'], ['secrets', 'Secrets']];
+const CHAPTERS = [['top', 'Intro'], ['inside', 'Inside'], ['router', 'Gateway'], ['explore', 'Drawing'], ['scenarios', 'In motion'], ['network', 'Network'], ['modules', 'Roster'], ['critical', 'Criticality'], ['uds', 'UDS'], ['story', 'Findings']];
 $('#rail').innerHTML = CHAPTERS.map(([id, l], i) => `<a href="#${id}" data-sec="${id}"><span class="mono">${String(i).padStart(2, '0')}</span>${esc(l)}</a>`).join('');
 function markRail(id) { $$('#rail a').forEach(a => a.classList.toggle('on', a.dataset.sec === id)); }
 const chObs = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) markRail(e.target.id); }), { rootMargin: '-40% 0px -55% 0px' });
@@ -542,8 +638,9 @@ addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if 
    ============================================================ */
 renderChapters(D, ctx, { showModule, showBus });
 $('#trace-play').onclick = () => {
+  rememberSpot();
   $('#scenarios').scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth' });
-  let t = 0; const wait = () => { if (Math.abs($('#scenarios').getBoundingClientRect().top) < 4 || t++ > 90) { setMode('scenarios'); playing = true; startScenario('diag'); } else requestAnimationFrame(wait); }; requestAnimationFrame(wait);
+  afterScroll(() => { setMode('scenarios'); playing = true; startScenario('diag'); offerReturn(); });
 };
 renderSheet();
 setMode('hero');

@@ -1,9 +1,9 @@
 {
  "meta": {
   "title": "The Wired Car",
-  "subtitle": "How the 40 computers in an Audi e-tron talk to each other — and to you",
+  "subtitle": "How the 40 computers in an Audi e-tron talk to each other, and to you",
   "vin": "WAUZZZGE6MB••••••",
-  "model": "Audi e-tron (GE), MY2022",
+  "model": "Audi e-tron (GE), MY2021",
   "gateway": "0x4010",
   "tester": "0x0E00",
   "doip_ip": "169.254.124.138",
@@ -15,12 +15,12 @@
   {
    "id": "gateway",
    "label": "Gateway",
-   "blurb": "The router and diagnostic master — the single door to the outside world."
+   "blurb": "The router and diagnostic master. The only door to the outside world."
   },
   {
    "id": "powertrain",
    "label": "Powertrain / HV",
-   "blurb": "The electric heart: battery, inverters, charging and conversion."
+   "blurb": "The battery, the inverters, charging and power conversion."
   },
   {
    "id": "chassis",
@@ -30,12 +30,12 @@
   {
    "id": "adas",
    "label": "ADAS",
-   "blurb": "Perception: radars and the central driver-assistance computer."
+   "blurb": "The radars and the central driver-assistance computer."
   },
   {
    "id": "body",
    "label": "Body / Comfort",
-   "blurb": "Lights, doors, windows, seats, tailgate — the comfort layer."
+   "blurb": "Lights, doors, windows, seats and the tailgate."
   },
   {
    "id": "lighting",
@@ -45,7 +45,7 @@
   {
    "id": "hmi",
    "label": "HMI / Display",
-   "blurb": "What you see and touch: cluster, head-up display, gear selector."
+   "blurb": "The instrument cluster, head-up display and gear selector."
   },
   {
    "id": "infotainment",
@@ -55,7 +55,7 @@
   {
    "id": "telematics",
    "label": "Telematics",
-   "blurb": "eCall, LTE, Wi-Fi — the car's link to the internet."
+   "blurb": "eCall, LTE and Wi-Fi, which connect the car to the internet."
   }
  ],
  "buses": [
@@ -64,7 +64,7 @@
    "label": "CAN",
    "speed": "125–500 kbit/s",
    "topology": "linear bus (2 wires)",
-   "why": "The workhorse. Multicast with priority arbitration — enough for slow comfort signals.",
+   "why": "The workhorse. Multicast with priority arbitration, enough for slow comfort signals.",
    "members": [
     "0x400E",
     "0x408B",
@@ -91,7 +91,7 @@
    "label": "CAN FD",
    "speed": "2–5 Mbit/s",
    "topology": "linear bus",
-   "why": "CAN extended: bigger payload (up to 64 B) and faster — for dense powertrain and HV traffic.",
+   "why": "CAN extended: bigger payload (up to 64 B) and faster, for dense powertrain and HV traffic.",
    "members": [
     "0x4076",
     "0x407B",
@@ -176,7 +176,7 @@
   {
    "id": "0x22",
    "name": "ReadDataByIdentifier",
-   "role": "Read a DID — identification, coding, measured values",
+   "role": "Read a DID: identification, coding, measured values",
    "kind": "read",
    "barrier": "free"
   },
@@ -227,7 +227,7 @@
   {
    "n": 1,
    "name": "Session",
-   "detail": "10 03 — extended session. Required for most writes.",
+   "detail": "10 03 opens the extended session. Required for most writes.",
    "blocks": "nothing yet"
   },
   {
@@ -239,13 +239,13 @@
   {
    "n": 3,
    "name": "SFD",
-   "detail": "Schutz der Fahrzeugdiagnose — challenge → token, normally unlocked online. Not enforced on this car: the 0x0600 coding write succeeded with no 0x27 and no SFD token.",
-   "blocks": "security access, writes, coding, actuator tests (MY2020+) — but not the 0x0600 coding write on this car"
+   "detail": "Schutz der Fahrzeugdiagnose (vehicle diagnostics protection). The tester answers a challenge with a token, normally fetched online. This car did not enforce it for the 0x0600 coding write, which succeeded with no 0x27 and no SFD token.",
+   "blocks": "security access, writes, coding, actuator tests (MY2020+), but not the 0x0600 coding write on this car"
   },
   {
    "n": 4,
    "name": "Component protection",
-   "detail": "Komponentenschutz — binds a module to one car.",
+   "detail": "Komponentenschutz. It binds each module to one car.",
    "blocks": "swapping modules between cars"
   }
  ],
@@ -273,7 +273,7 @@
     "side": "L",
     "zone": "cabin-front",
     "confidence": "medium",
-    "basis": "steering column module — at the base of the steering column"
+    "basis": "At the base of the steering column."
    }
   },
   {
@@ -299,7 +299,7 @@
     "side": "L",
     "zone": "cabin-front",
     "confidence": "medium",
-    "basis": "body control module — behind the dash, driver side"
+    "basis": "Behind the dash, driver side."
    }
   },
   {
@@ -319,7 +319,7 @@
    ],
    "criticality": "high",
    "access": "read+write",
-   "role": "The car's router and diagnostic master — the single door to the outside world and the hub that moves messages between buses.",
+   "role": "The car's router and diagnostic master: the single door to the outside world and the hub that moves messages between buses.",
    "location": {
     "mm": {
      "x": 1960,
@@ -329,7 +329,7 @@
     "side": "C",
     "zone": "cabin-front",
     "confidence": "medium",
-    "basis": "router for all five buses — under the dash, left of the centre console, where the harness trunks meet (typical MLB evo placement)"
+    "basis": "Under the dash, left of the centre console, where the harness trunks meet. This is the usual MLB evo position."
    }
   },
   {
@@ -355,7 +355,7 @@
     "side": "C",
     "zone": "cabin-front",
     "confidence": "medium",
-    "basis": "EPS control unit — on the steering rack, front of the cabin"
+    "basis": "On the steering rack, front of the cabin."
    }
   },
   {
@@ -364,7 +364,7 @@
    "addr": "0x4013",
    "part": "4KE909059AF",
    "name": "EV_BRSContiMKC1AU516",
-   "label": "Brake system — Continental MK C1",
+   "label": "Brake system (Continental MK C1)",
    "domain": "chassis",
    "bus": [
     "flexray"
@@ -381,7 +381,7 @@
     "side": "C",
     "zone": "cabin-front",
     "confidence": "medium",
-    "basis": "integrated brake unit — at the firewall, engine-bay side"
+    "basis": "At the firewall, engine-bay side."
    }
   },
   {
@@ -407,7 +407,7 @@
     "side": "L",
     "zone": "cabin-front",
     "confidence": "high",
-    "basis": "instrument cluster — directly in front of the driver"
+    "basis": "Directly in front of the driver."
    }
   },
   {
@@ -433,7 +433,7 @@
     "side": "C",
     "zone": "cabin-front",
     "confidence": "medium",
-    "basis": "airbag ECU — on the transmission tunnel, under the centre console"
+    "basis": "On the transmission tunnel, under the centre console."
    }
   },
   {
@@ -459,7 +459,7 @@
     "side": "L",
     "zone": "cabin-front",
     "confidence": "medium",
-    "basis": "head-up display — top of the dashboard, driver side"
+    "basis": "Top of the dashboard, driver side."
    }
   },
   {
@@ -485,7 +485,7 @@
     "side": "C",
     "zone": "rear",
     "confidence": "high",
-    "basis": "tailgate control — at the rear hatch"
+    "basis": "At the rear hatch."
    }
   },
   {
@@ -501,7 +501,7 @@
    ],
    "criticality": "critical",
    "access": "read-only",
-   "role": "Electric steering-column lock — the anti-theft steering lock.",
+   "role": "Electric steering-column lock: the anti-theft steering lock.",
    "location": {
     "mm": {
      "x": 1930,
@@ -511,7 +511,7 @@
     "side": "L",
     "zone": "cabin-front",
     "confidence": "medium",
-    "basis": "column lock — on the steering column"
+    "basis": "On the steering column."
    }
   },
   {
@@ -537,7 +537,7 @@
     "side": "L",
     "zone": "doors",
     "confidence": "high",
-    "basis": "rear-left door module — inside the rear-left door"
+    "basis": "Inside the rear-left door."
    }
   },
   {
@@ -563,7 +563,7 @@
     "side": "R",
     "zone": "doors",
     "confidence": "high",
-    "basis": "rear-right door module — inside the rear-right door"
+    "basis": "Inside the rear-right door."
    }
   },
   {
@@ -589,7 +589,7 @@
     "side": "L",
     "zone": "cabin-front",
     "confidence": "medium",
-    "basis": "HVAC / thermal control — behind the dash, near the heater matrix"
+    "basis": "Behind the dash, near the heater matrix."
    }
   },
   {
@@ -615,7 +615,7 @@
     "side": "L",
     "zone": "front-axle",
     "confidence": "medium",
-    "basis": "on-board charger — front of the car, near the charge port"
+    "basis": "Front of the car, near the charge port."
    }
   },
   {
@@ -641,7 +641,7 @@
     "side": "L",
     "zone": "rear",
     "confidence": "medium",
-    "basis": "trailer module — rear of the car, near the tow-bar wiring"
+    "basis": "Rear of the car, near the tow-bar wiring."
    }
   },
   {
@@ -667,7 +667,7 @@
     "side": "L",
     "zone": "doors",
     "confidence": "high",
-    "basis": "front-left door module — inside the driver's door"
+    "basis": "Inside the driver's door."
    }
   },
   {
@@ -693,7 +693,7 @@
     "side": "R",
     "zone": "doors",
     "confidence": "high",
-    "basis": "front-right door module — inside the passenger door"
+    "basis": "Inside the passenger door."
    }
   },
   {
@@ -719,7 +719,7 @@
     "side": "L",
     "zone": "seats",
     "confidence": "medium",
-    "basis": "seat module — under the driver's seat"
+    "basis": "Under the driver's seat."
    }
   },
   {
@@ -745,7 +745,7 @@
     "side": "L",
     "zone": "rear-axle",
     "confidence": "high",
-    "basis": "rear radar sensor 1 — rear corner, left"
+    "basis": "Rear corner, left."
    }
   },
   {
@@ -771,7 +771,7 @@
     "side": "C",
     "zone": "cabin-front",
     "confidence": "medium",
-    "basis": "zFAS — behind the rear seat bench / in the luggage area on MLBevo; placed centrally here"
+    "basis": "On MLB evo cars this sits behind the rear bench or in the luggage area. It is drawn in the middle of the car here."
    }
   },
   {
@@ -798,7 +798,7 @@
     "side": "C",
     "zone": "cabin-front",
     "confidence": "medium",
-    "basis": "gear selector — on the centre console"
+    "basis": "On the centre console."
    }
   },
   {
@@ -824,7 +824,7 @@
     "side": "C",
     "zone": "nose",
     "confidence": "high",
-    "basis": "ACC front radar — behind the front grille, centre"
+    "basis": "Behind the front grille, centre."
    }
   },
   {
@@ -851,7 +851,7 @@
     "side": "C",
     "zone": "rear-axle",
     "confidence": "medium",
-    "basis": "sound actuator — under the car, front/rear; placed near the rear axle"
+    "basis": "Under the car. It could be at the front or the rear; it is drawn near the rear axle."
    }
   },
   {
@@ -877,7 +877,7 @@
     "side": "R",
     "zone": "cabin-front",
     "confidence": "medium",
-    "basis": "connectivity box — behind the dash / under the rear bench; placed in the cabin"
+    "basis": "Behind the dash or under the rear bench. It is drawn in the cabin."
    }
   },
   {
@@ -903,7 +903,7 @@
     "side": "L",
     "zone": "cabin-front",
     "confidence": "medium",
-    "basis": "MIB head unit — behind the centre display"
+    "basis": "Behind the centre display."
    }
   },
   {
@@ -919,7 +919,7 @@
    ],
    "criticality": "critical",
    "access": "read-only",
-   "role": "Vehicle Control Unit: the EV powertrain coordinator — torque, charging and energy flow.",
+   "role": "Vehicle Control Unit: the EV powertrain coordinator for torque, charging and energy flow.",
    "location": {
     "mm": {
      "x": 2440,
@@ -929,7 +929,7 @@
     "side": "C",
     "zone": "floor",
     "confidence": "medium",
-    "basis": "VCU — in the cabin/floor area, coordinating the HV system"
+    "basis": "In the cabin floor area."
    }
   },
   {
@@ -955,7 +955,7 @@
     "side": "C",
     "zone": "floor",
     "confidence": "high",
-    "basis": "BECM — mounted on the HV battery pack, under the floor"
+    "basis": "Mounted on the HV battery pack, under the floor."
    }
   },
   {
@@ -981,7 +981,7 @@
     "side": "C",
     "zone": "front-axle",
     "confidence": "medium",
-    "basis": "front motor inverter — on the front axle"
+    "basis": "On the front axle."
    }
   },
   {
@@ -1007,7 +1007,7 @@
     "side": "C",
     "zone": "floor",
     "confidence": "medium",
-    "basis": "chassis control — central underbody, near the air suspension valves"
+    "basis": "Central underbody, near the air suspension valves."
    }
   },
   {
@@ -1033,7 +1033,7 @@
     "side": "R",
     "zone": "rear-axle",
     "confidence": "high",
-    "basis": "rear radar sensor 2 — rear corner, right"
+    "basis": "Rear corner, right."
    }
   },
   {
@@ -1059,7 +1059,7 @@
     "side": "R",
     "zone": "cabin-front",
     "confidence": "medium",
-    "basis": "body control module 2 — behind the dash, passenger side"
+    "basis": "Behind the dash, passenger side."
    }
   },
   {
@@ -1086,7 +1086,7 @@
     "side": "L",
     "zone": "nose",
     "confidence": "high",
-    "basis": "left headlight module — in the left headlight"
+    "basis": "In the left headlight."
    }
   },
   {
@@ -1113,7 +1113,7 @@
     "side": "R",
     "zone": "nose",
     "confidence": "high",
-    "basis": "right headlight module — in the right headlight"
+    "basis": "In the right headlight."
    }
   },
   {
@@ -1139,7 +1139,7 @@
     "side": "L",
     "zone": "nose",
     "confidence": "high",
-    "basis": "front corner radar 1 — front corner, left"
+    "basis": "Front corner, left."
    }
   },
   {
@@ -1165,7 +1165,7 @@
     "side": "R",
     "zone": "nose",
     "confidence": "high",
-    "basis": "front corner radar 2 — front corner, right"
+    "basis": "Front corner, right."
    }
   },
   {
@@ -1191,7 +1191,7 @@
     "side": "R",
     "zone": "front-axle",
     "confidence": "medium",
-    "basis": "DC/DC converter — front of the car, near the HV junction"
+    "basis": "Front of the car, near the HV junction."
    }
   },
   {
@@ -1217,7 +1217,7 @@
     "side": "C",
     "zone": "rear-axle",
     "confidence": "medium",
-    "basis": "rear motor inverter — on the rear axle"
+    "basis": "On the rear axle."
    }
   },
   {
@@ -1243,7 +1243,7 @@
     "side": "L",
     "zone": "rear-axle",
     "confidence": "medium",
-    "basis": "rear-axle power electronics, left"
+    "basis": "On the rear axle, left side."
    }
   },
   {
@@ -1269,7 +1269,7 @@
     "side": "R",
     "zone": "rear-axle",
     "confidence": "medium",
-    "basis": "rear-axle power electronics, right"
+    "basis": "On the rear axle, right side."
    }
   },
   {
@@ -1295,7 +1295,7 @@
     "side": "C",
     "zone": "cabin-front",
     "confidence": "low",
-    "basis": "duplicate airbag address — co-located with 0x4015; exact node unclear"
+    "basis": "A second address for the airbag unit, so it is drawn at 0x4015. Which physical node answers is unclear."
    }
   },
   {
@@ -1316,7 +1316,7 @@
     "side": "C",
     "zone": "front-axle",
     "confidence": "medium",
-    "basis": "front e-machine — on the front axle"
+    "basis": "On the front axle."
    }
   },
   {
@@ -1337,7 +1337,7 @@
     "side": "C",
     "zone": "rear-axle",
     "confidence": "medium",
-    "basis": "rear e-machine — on the rear axle"
+    "basis": "On the rear axle."
    }
   },
   {
@@ -1350,7 +1350,7 @@
    ],
    "criticality": "medium",
    "access": "read-only",
-   "role": "Intelligent tail-light ECUs — LIN slaves behind BCM2, not on the diagnostic bus.",
+   "role": "Intelligent tail-light ECUs: LIN slaves behind BCM2, not on the diagnostic bus.",
    "location": {
     "mm": {
      "x": 4840,
@@ -1360,7 +1360,7 @@
     "side": "C",
     "zone": "rear",
     "confidence": "high",
-    "basis": "rear-light ECUs — in the tail lights, behind BCM2 (LIN)"
+    "basis": "In the tail lights, wired to BCM2 over LIN."
    }
   },
   {
@@ -1371,7 +1371,7 @@
    "bus": [],
    "criticality": "low",
    "access": "read+write",
-   "role": "Your tester — ODIS-E, VCDS or this tool. The only thing that talks to the car from outside.",
+   "role": "My tester, running ODIS-E, VCDS or this tool. It is the only thing that talks to the car from outside.",
    "location": {
     "mm": {
      "x": 1650,
@@ -1381,7 +1381,7 @@
     "side": "L",
     "zone": "outside",
     "confidence": "high",
-    "basis": "off-board: a laptop outside the car, plugged into the OBD socket in the driver footwell (DoIP over the OBD Ethernet pins)"
+    "basis": "Outside the car. A laptop plugged into the OBD socket in the driver footwell, talking DoIP over the socket's Ethernet pins."
    }
   }
  ],
@@ -1440,14 +1440,14 @@
    "to": "0x407C",
    "kind": "command",
    "layer": "powertrain",
-   "label": "torque request — front motor"
+   "label": "torque request, front motor"
   },
   {
    "from": "0x4076",
    "to": "0x40B8",
    "kind": "command",
    "layer": "powertrain",
-   "label": "torque request — rear motor"
+   "label": "torque request, rear motor"
   },
   {
    "from": "0x4076",
@@ -1566,28 +1566,28 @@
    "to": "0x404A",
    "kind": "command",
    "layer": "comfort",
-   "label": "lock / window / mirror — front left"
+   "label": "lock / window / mirror, front left"
   },
   {
    "from": "0x400E",
    "to": "0x404B",
    "kind": "command",
    "layer": "comfort",
-   "label": "lock / window — front right"
+   "label": "lock / window, front right"
   },
   {
    "from": "0x400E",
    "to": "0x403E",
    "kind": "command",
    "layer": "comfort",
-   "label": "lock / window — rear left"
+   "label": "lock / window, rear left"
   },
   {
    "from": "0x400E",
    "to": "0x403F",
    "kind": "command",
    "layer": "comfort",
-   "label": "lock / window — rear right"
+   "label": "lock / window, rear right"
   },
   {
    "from": "0x400E",
@@ -2327,7 +2327,7 @@
        "0x407B"
       ]
      ],
-     "caption": "The VCU decides how much torque each axle gets and asks the battery for power — three commands on the powertrain CAN FD.",
+     "caption": "The VCU decides how much torque each axle gets and asks the battery for power: three commands on the powertrain CAN FD.",
      "shot": "iso"
     },
     {
@@ -2349,7 +2349,7 @@
        "motor-rear"
       ]
      ],
-     "caption": "Power, not data: HV DC leaves the pack, the inverters turn it into 3-phase AC and the motors turn.",
+     "caption": "This step is power, with no messages. High-voltage DC leaves the pack, the inverters turn it into 3-phase AC and the motors turn.",
      "components": [
       "motor-f",
       "motor-r",
@@ -2368,7 +2368,7 @@
        "0x4014"
       ]
      ],
-     "caption": "The pack reports state of charge back to the VCU, which tells the cluster what to draw as <b>energy flow (BAP)</b> — crossing from CAN FD to CAN through the gateway.",
+     "caption": "The pack reports state of charge back to the VCU, which tells the cluster what to draw as <b>energy flow (BAP)</b>, crossing from CAN FD to CAN through the gateway.",
      "components": [
       "motor-f",
       "motor-r"
@@ -2425,7 +2425,7 @@
        "rear-lights"
       ]
      ],
-     "caption": "Coming-home lighting: BCM1 drives the Matrix-LED modules over CAN; BCM2 reaches the rear lights over <b>LIN</b>, the slowest wire in the car.",
+     "caption": "The lights come on to greet the driver. BCM1 drives the Matrix-LED modules over CAN, and BCM2 reaches the rear lights over <b>LIN</b>, the slowest wire in the car.",
      "components": [
       "door-fl",
       "door-fr",
@@ -2444,7 +2444,7 @@
        "0x4023"
       ]
      ],
-     "caption": "Tailgate open — another BCM1 command on the same CAN.",
+     "caption": "Opening the tailgate is another BCM1 command on the same CAN.",
      "components": [
       "tailgate",
       "rear-bar"
@@ -2498,7 +2498,7 @@
        "0x407B"
       ]
      ],
-     "caption": "Charge power flows into the pack while thermal management asks the BECM to condition the cells — the thermal command crosses from CAN to CAN FD.",
+     "caption": "Charge power flows into the pack while thermal management asks the BECM to condition the cells. The thermal command crosses from CAN to CAN FD.",
      "components": [
       "charge-l",
       "battery"
@@ -2662,9 +2662,9 @@
    "id": "precondition",
    "letter": "D",
    "title": "Precondition",
-   "gist": "Write the two service-interval DIDs first.",
-   "noteRef": "note-2",
-   "noteLabel": "Note 2"
+   "gist": "Write F198 and F199 first.",
+   "noteRef": "secret-precondition",
+   "noteLabel": "Finding 1"
   },
   {
    "id": "again",
@@ -2716,7 +2716,7 @@
    "outcome": "none",
    "bytes": "22 F1 87",
    "meaning": "ReadDataByIdentifier · spare part number",
-   "say": "Read the spare part number. Identification is free: no key, no token.",
+   "say": "Read the spare part number. Identification is free and needs no key or token.",
    "from": "tester",
    "to": "0x4014"
   },
@@ -2764,7 +2764,7 @@
    "outcome": "none",
    "bytes": "2E 06 00",
    "meaning": "WriteDataByIdentifier · coding block",
-   "say": "Try the coding write. The cluster refuses with 0x24, requestSequenceError: something has to happen first.",
+   "say": "Try the coding write. The cluster refuses with 0x24, requestSequenceError, which means something has to happen first.",
    "from": "tester",
    "to": "0x4014"
   },
@@ -2851,17 +2851,21 @@
  "secrets": [
   {
    "id": "precondition",
-   "title": "The coding-write precondition",
-   "secret": "2E 0600 is refused (7F 2E 24) unless F198 and F199 are written first, in the same extended session. No 0x27, no SFD.",
-   "evidence": "The live UDS trace: 7F 2E 24 until F198 and F199 are written in the same session.",
-   "why": "It is the difference between 'the car is locked' and 'the car wants a sequence'."
+   "title": "The cluster wants two writes before it accepts coding",
+   "secret": "The coding write 2E 0600 is refused with 7F 2E 24 (request sequence error) until F198 and F199 have been written in the same extended session. It needs no security access and no SFD token.",
+   "evidence": "The exchange in chapter 08, captured live.",
+   "see": {
+    "href": "#trace",
+    "label": "See the exchange ↑"
+   },
+   "why": "No documentation I found mentions this order. Once I knew it, every coding write I needed went through."
   },
   {
    "id": "fod-gate",
-   "title": "FoD/SWaP is the real gate for the light features",
-   "secret": "The taillight animation is not a coding bit; it is a Functions-on-Demand licence. A licence, not firmware, was the wall.",
-   "evidence": "The licence read and write on the gateway; the light package appears as an FS-ID, not a coding bit.",
-   "why": "It reframes the project: the feature was not missing, the permission was."
+   "title": "The taillight animation is sold as a licence",
+   "secret": "The animation is a Functions-on-Demand feature. It needs a licence on the gateway plus one routing bit. The coding alone was not enough.",
+   "evidence": "The light package appears as an FS-ID (feature ID) in the gateway's licence list.",
+   "why": "The feature was already in the firmware. The car only needed permission to run it."
   },
   {
    "id": "fod-record",
@@ -2875,7 +2879,7 @@
    "title": "Session 0x40 + routine 31 01 C001",
    "secret": "The SWaP activation routine runs in session 0x40; 31 01 C001 activates the written licence.",
    "evidence": "A session-0x40 probe: 31 01 C001 returns a status record and makes the written licence live.",
-   "why": "The write is only half of it; the activation routine makes it live."
+   "why": "Writing the licence is only half the job. The activation routine is what brings it to life."
   },
   {
    "id": "fsid-list",
@@ -2889,28 +2893,21 @@
    "title": "The 384-byte trailer is reusable",
    "secret": "The signature does not bind the FS-ID list; the list is the only variable part, so the embedded 384-byte trailer could be reused.",
    "evidence": "The same 384-byte trailer reused across five different FS-ID lists.",
-   "why": "It is what made the write possible without a fresh signature."
+   "why": "This is why the write could be made without asking the vendor for a fresh signature."
   },
   {
    "id": "seven-modules",
    "title": "Seven modules reject raw 0x14",
    "secret": "0x4013 0x4042 0x4044 0x4076 0x407B 0x407C 0x40B8 reject raw UDS 0x14; they need the ODX-defined clear routine.",
    "evidence": "A 0x14 clear probe against every address: 33 accept it, these seven answer serviceNotSupported.",
-   "why": "It is the real residual limit — not the animation."
+   "why": "Clearing faults on these modules still requires a bit more work in my custom tool."
   },
   {
    "id": "dtc-storm",
    "title": "A licence write produces a transient DTC storm",
    "secret": "Writing the licence triggers a burst of DTCs with status 0x2E ('all ECUs restarted') until the car settles.",
    "evidence": "The fault read after the licence write: a burst of status-0x2E DTCs that settles.",
-   "why": "It looks alarming and is expected; knowing it stops you chasing ghosts."
-  },
-  {
-   "id": "payoff",
-   "title": "The payoff",
-   "secret": "Writing the licence (and the routing bit) enabled the taillight animation. The feature runs.",
-   "evidence": "The taillight animation running on the car after the write.",
-   "why": "The goal was achieved by writing, not by waiting for firmware."
+   "why": "The burst looks alarming but is expected. Knowing that saved me from chasing faults that were not there."
   }
  ],
  "accessGroups": [

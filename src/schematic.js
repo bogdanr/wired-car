@@ -1,11 +1,11 @@
 /* ============================================================
-   System schematic — the network drawn the way an electronics
+   System schematic: the network drawn the way an electronics
    engineer would draw it:
 
      · CAN and CAN FD are terminated two-wire lines (120 Ω at each end);
        modules tap off them in front-to-rear order.
      · FlexRay and Ethernet are stars centred on the gateway
-       (star coupler / switch — placement schematic, as the data says).
+       (star coupler / switch: placement schematic, as the data says).
      · LIN hangs off its master, not the gateway.
      · The tester sits outside the vehicle boundary; its only way in is
        the OBD socket → gateway.
@@ -16,7 +16,7 @@
    The desktop drawing is one SVG; below 900 px a stacked HTML version
    (one panel per bus) replaces it. Hover lights a module's path to the
    gateway; "trace" plays the scenarios as packets that stop at the
-   gateway only when they change bus — the same rule the 3D stage uses.
+   gateway only when they change bus, the same rule the 3D stage uses.
    ============================================================ */
 import { esc, $, $$, fmtRate } from './chapters.js';
 
@@ -91,7 +91,7 @@ export function renderSchematic(D, ctx, hooks) {
     const w = 8 + text.length * 5.6, h = 16, x0 = x - w / 2;
     const tip = dir === 'up' ? `M${r1(x0)},${r1(y + h)} L${r1(x0)},${r1(y + 5)} L${r1(x)},${r1(y)} L${r1(x0 + w)},${r1(y + 5)} L${r1(x0 + w)},${r1(y + h)} Z`
       : `M${r1(x0)},${r1(y)} L${r1(x0 + w)},${r1(y)} L${r1(x0 + w)},${r1(y + h - 5)} L${r1(x)},${r1(y + h)} L${r1(x0)},${r1(y + h - 5)} Z`;
-    add(blocks, `<g class="sx sc-flag" data-m="${esc(m)}" data-b="${b}" data-bus="${b}" tabindex="0" role="button" aria-label="${esc(MOD[m].label)} — also on ${esc(BUS[b].label)}. Show on the car.">
+    add(blocks, `<g class="sx sc-flag" data-m="${esc(m)}" data-b="${b}" data-bus="${b}" tabindex="0" role="button" aria-label="${esc(MOD[m].label)}, also on ${esc(BUS[b].label)}. Show on the car.">
       <path d="${tip}"/><text x="${r1(x)}" y="${r1(y + (dir === 'up' ? 13 : 11))}" text-anchor="middle">${esc(text)}</text></g>`);
   }
   function termination(x, y, b) {
@@ -381,9 +381,9 @@ export function renderSchematic(D, ctx, hooks) {
   function showMod(id) {
     const m = MOD[id], s = modSets(id);
     focus(s.ids, s.buses);
-    const route = id === GW ? 'every bus meets here' : id === 'tester' ? 'outside the car — reaches it only through the OBD socket and the gateway'
+    const route = id === GW ? 'every bus meets here' : id === 'tester' ? 'outside the car, reaching it only through the OBD socket and the gateway'
       : linMasterOf[id] ? `LIN slave of ${linMasterOf[id]}; reaches the rest of the car through its master`
-      : busesOf(id).length > 1 ? 'on two buses — drawn once, the second connection is a flag' : `talks to other buses only through the gateway ${GW}`;
+      : busesOf(id).length > 1 ? 'on two buses: drawn once, the second connection is a flag' : `talks to other buses only through the gateway ${GW}`;
     read.innerHTML = `<b class="mono">${esc(m.addr || m.id)}</b> <strong>${esc(m.label)}</strong> ${chips(id)} <span class="sc-read-r">${esc(route)}</span>`;
   }
   function showBusInfo(b) {
@@ -412,7 +412,7 @@ export function renderSchematic(D, ctx, hooks) {
 
   /* ---------------- tracer: packets along the drawn wires ---------------- */
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const speed = b => 140 + 95 * Math.log10(BUS[b].bitrate / 2e4);          // px/s — faster wire, faster packet
+  const speed = b => 140 + 95 * Math.log10(BUS[b].bitrate / 2e4);          // px/s: faster wire, faster packet
   const dedupe = pts => pts.filter((p, i) => !i || p[0] !== pts[i - 1][0] || p[1] !== pts[i - 1][1]);
   const P = (id, b) => pin[id] && pin[id][b];
   function toGw(id, b) {
@@ -440,7 +440,7 @@ export function renderSchematic(D, ctx, hooks) {
   const pk = $('#sc-pk', S), coreEl = $('.sc-core', S);
   let raf = 0, timer = 0, run = 0;
   function animate(list, done) {
-    // list: [{ legs }] — one packet each, run together
+    // list: [{ legs }]: one packet each, run together
     const packets = list.map(L => {
       const segs = []; let t = 0;
       L.forEach(l => {
@@ -514,7 +514,7 @@ export function renderSchematic(D, ctx, hooks) {
         if (L.length) list.push(L);
       });
       focus(ids, buses);
-      read.innerHTML = `<span class="sc-step">${k + 1}/${sc.steps.length}</span> <span>${st.caption}</span>${skipped && !list.length ? ' <span class="sc-read-r">High-voltage power — not a data message, so not on this diagram.</span>' : ''}`;
+      read.innerHTML = `<span class="sc-step">${k + 1}/${sc.steps.length}</span> <span>${st.caption}</span>${skipped && !list.length ? ' <span class="sc-read-r">High-voltage power is not a data message, so it is not on this diagram.</span>' : ''}`;
       if (!list.length) { timer = setTimeout(() => step(k + 1), 2600); return; }
       animate(list, () => { if (my !== run) return; pk.innerHTML = ''; timer = setTimeout(() => step(k + 1), 700); });
     };
@@ -543,9 +543,9 @@ export function renderSchematic(D, ctx, hooks) {
     const also = (id, pb) => busesOf(id).length > 1 ? `<small>also ${busesOf(id).filter(b => b !== pb).map(b => SHORT[b]).join(', ')}</small>` : '';
     const fd = [...fdIds, ...fdFlags].sort(byX);
     return `<div class="sc-mob">
-      <div class="scm-chip"><b class="mono">${GW}</b><strong>Central gateway</strong><span>Every bus ends here. It checks each message and forwards it — the only path between buses and from the OBD socket into the car.</span></div>
+      <div class="scm-chip"><b class="mono">${GW}</b><strong>Central gateway</strong><span>Every bus ends here. It checks each message and forwards it. It is the only path between buses and from the OBD socket into the car.</span></div>
       ${panel('can', 'line', canRow.map(id => id === GW ? gwLi : node(id, also(id, 'can'))).join(''), 'A shared two-wire line, terminated with 120 Ω at both ends. Front to rear.')}
-      ${panel('canfd', 'line', [...fd, GW].sort(byX).map(id => id === GW ? gwLi : node(id, also(id, 'canfd'))).join(''), 'The powertrain line — same wiring as CAN, faster data phase.')}
+      ${panel('canfd', 'line', [...fd, GW].sort(byX).map(id => id === GW ? gwLi : node(id, also(id, 'canfd'))).join(''), 'The powertrain line: same wiring as CAN, faster data phase.')}
       ${panel('flexray', 'star', frIds.map(id => node(id)).join(''), 'An active star: each module has its own link to the star coupler in the gateway.')}
       ${panel('eth', 'star', ethIds.map(id => node(id)).join('') + node('tester', '<small>via OBD · DoIP</small>'), 'A switched star: every link is point-to-point to the switch in the gateway. The tester plugs in here.')}
       ${panel('lin', 'lin', linSegs.map(s => node(s.master, '<small>master</small>') + s.slaves.map(x => node(x, '<small>slave</small>')).join('')).join('') + [...localLin].map(id => node(id, '<small>own local LIN</small>')).join(''), 'A single wire from a master to its slaves. It never touches the gateway.')}

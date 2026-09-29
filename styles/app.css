@@ -1,5 +1,5 @@
 /* ============================================================
-   The Wired Car — application styles
+   The Wired Car: application styles
    Every colour comes from tokens.css. Bus hue is set once per
    element via [data-bus] → --c and used as var(--c).
    ============================================================ */
@@ -296,6 +296,10 @@ kbd { display: inline-grid; place-items: center; min-width: 1.6em; height: 1.6em
 .player-bar .done i { background: var(--ink-2); }
 .player-bar .now i::after { content: ""; position: absolute; inset: 0; background: var(--ink); transform-origin: 0 50%; animation: fillBar var(--dur, 5s) linear forwards; }
 .player.paused .player-bar .now i::after { animation: none; transform: none; }
+.player.held .player-bar .now i::after { animation-play-state: paused; }
+.scen-offer { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; height: 36px; padding: 0 14px; border-radius: var(--r-pill);
+  border: 1px solid var(--rule-2); background: var(--surface); color: var(--ink); font-size: .86rem; font-weight: 600; }
+.scen-offer:hover { border-color: var(--ink-3); }
 @keyframes fillBar { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 
 /* ---------- title block ---------- */
@@ -344,12 +348,29 @@ kbd { display: inline-grid; place-items: center; min-width: 1.6em; height: 1.6em
 .ports li { display: grid; grid-template-columns: 26px 1fr auto; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--rule); font-size: var(--t-small); color: var(--ink-2); }
 .ports i { width: 18px; height: 10px; border: 1.5px solid var(--c); border-radius: 2px; box-shadow: 0 0 12px color-mix(in srgb, var(--c) 50%, transparent); }
 .ports em { font: 500 .7rem/1 var(--font-mono); font-style: normal; color: var(--ink-3); }
-.beat.beat-explore, .beat.beat-scen { align-items: flex-start; min-height: 190vh; min-height: 190svh; padding-top: 30svh; }
-.beat.beat-scen { min-height: 230svh; }
+/* runways: long enough to settle into the explorer, short enough that the page does not drift under a drag */
+.beat.beat-explore, .beat.beat-scen { align-items: flex-start; min-height: 130vh; min-height: 130svh; padding-top: 30svh; }
+.beat.beat-scen { min-height: 150svh; }
 .beat-text.compact { padding: 22px 24px; border-radius: 16px; background: var(--glass); backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px); border: 1px solid var(--rule-2); box-shadow: var(--shadow); width: min(460px, 36vw); }
 .beat-text.compact h2 { font-size: clamp(1.6rem, 1.1rem + 1.4vw, 2.3rem); }
 .beat-scen .beat-text.compact { margin-left: auto; margin-right: calc(var(--gutter) * 0.5); }
 .hint-line { margin-top: 12px; font-size: var(--t-small) !important; color: var(--ink-3) !important; }
+@media (pointer: coarse) { .hint-fine { display: none; } }
+
+/* "hold Ctrl to zoom" nudge, shown when the wheel is used over the drawing without the modifier */
+.zoom-hint { position: absolute; left: 50%; top: 50%; z-index: 13; transform: translate(-50%, -50%); padding: 10px 16px; border-radius: 10px;
+  background: var(--glass); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid var(--rule-2); box-shadow: var(--shadow);
+  font-size: .88rem; color: var(--ink); pointer-events: none; opacity: 0; transition: opacity .25s; }
+.zoom-hint.on { opacity: 1; }
+
+/* return pill: after a jump up to the drawing, one click takes the reader back */
+.return-pill { position: fixed; left: 50%; bottom: max(76px, env(safe-area-inset-bottom)); z-index: 45;   /* clears the bus chips and zoom tools */ transform: translate(-50%, 12px);
+  display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 18px; border-radius: var(--r-pill);
+  background: var(--ink); color: var(--bg); font-size: .9rem; font-weight: 600; box-shadow: var(--shadow);
+  opacity: 0; visibility: hidden; transition: opacity .25s, transform .25s var(--ease), visibility 0s linear .25s; }
+.return-pill.on { opacity: 1; visibility: visible; transform: translate(-50%, 0); transition-delay: 0s; }
+.return-pill:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+.return-pill svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
 /* ============================================================
    CHAPTERS
@@ -680,6 +701,8 @@ td.num { font-family: var(--font-mono); }
 .ticks.cross li::after { content: ""; position: absolute; left: 2px; top: 23px; width: 13px; border-top: 1.6px solid var(--hv); transform: rotate(-45deg); }
 
 /* ---------- secrets ---------- */
+.findings-title { scroll-margin-top: calc(var(--bar-h) + 24px); }
+.secrets .drawing-note { scroll-margin-top: calc(var(--bar-h) + 24px); }
 .secrets { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: var(--s-5); }
 .secrets .drawing-note { margin: 0; }
 .secret-t { margin-bottom: 8px; }
@@ -728,10 +751,12 @@ td.num { font-family: var(--font-mono); }
   .hud-bus { max-width: calc(100% - 560px); }
 }
 @media (max-width: 899px) {
-  :root { --bar-h: 52px; }
-  .rail { display: none; }
-  .bar { gap: 12px; }
+  :root { --bar-h: 96px; }
+  /* two-row bar: brand + tools on top, the chapter rail as a scrollable strip below */
+  .bar { gap: 12px; flex-wrap: wrap; align-content: center; padding-top: 6px; padding-bottom: 6px; }
   .bar-tools { margin-left: auto; }
+  .rail { order: 3; flex-basis: 100%; margin: 0; padding: 3px 0 0; border: 0; border-radius: 0; background: none; overflow-x: auto; scrollbar-width: none; }
+  .rail a { flex: none; }
   /* stage: a top band that stays while the story scrolls under it */
   .stage { height: 62svh; margin-bottom: 0; border-bottom: 1px solid var(--rule); z-index: 3; }
   .stage::before { display: none; }
@@ -749,7 +774,6 @@ td.num { font-family: var(--font-mono); }
   .titleblock { display: none; }
   .hud-top { left: 10px; right: 10px; top: calc(var(--bar-h) + 8px); flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
   .seg { flex: none; }
-  #layers { display: none; }
   .hud-bus { left: 10px; right: 10px; bottom: 10px; max-width: none; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
   .bchip { flex: none; }
   .hud-tools { right: 10px; bottom: 52px; }
@@ -812,7 +836,7 @@ td.num { font-family: var(--font-mono); }
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
 }
 @media print {
-  .bar, .hud, .sheet, .player, .cue, .skip, .palette, .tip, .sc-bar, .sc-read { display: none !important; }
+  .bar, .hud, .sheet, .player, .cue, .skip, .palette, .tip, .zoom-hint, .return-pill, .sc-bar, .sc-read { display: none !important; }
   .stage { position: relative; height: 70vh; margin: 0; break-after: page; }
   .beat { min-height: 0 !important; padding: 24px 0; }
   .beat-text, .beat-text.compact { width: 100%; background: none; border: 0; box-shadow: none; backdrop-filter: none; }

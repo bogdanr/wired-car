@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>The Wired Car — how the 40 computers in an Audi e-tron talk to each other</title>
+<title>The Wired Car: how the 40 computers in an Audi e-tron talk to each other</title>
 <meta name="description" content="An interactive engineering drawing of the Audi e-tron: 40 ECUs, five buses, one gateway. Where each computer lives, what it does, and how a message travels through the car.">
 <meta name="color-scheme" content="dark light">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiByeD0iNSIgZmlsbD0iIzBiMGMwZSIvPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjkuMiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZWNlYmU2IiBzdHJva2Utd2lkdGg9IjEuNCIvPjxwYXRoIGQ9Ik01IDEyaDRsMi00IDIgOCAyLTRoNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmY2YjJjIiBzdHJva2Utd2lkdGg9IjEuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PC9zdmc+">
@@ -24,7 +24,7 @@
   <div class="bar-tools">
     <button class="find" id="open-find" type="button" aria-haspopup="dialog">
       <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M13 13l4 4"/></svg>
-      <span>Find a module</span><kbd>⌘K</kbd>
+      <span>Find a module</span><kbd id="find-kbd">⌘K</kbd>
     </button>
     <button class="icon" id="theme" type="button" aria-label="Switch to the light theme">
       <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="6.5"/><path d="M10 3.5a6.5 6.5 0 0 1 0 13z" class="fill"/></svg>
@@ -36,7 +36,7 @@
 <main id="main">
 
 <!-- =========================================================
-     THE STAGE — one drawing, pinned while the story plays on it
+     THE STAGE: one drawing, pinned while the story plays on it
      ========================================================= -->
 <div class="track" id="track">
   <div class="stage" id="stage" data-mode="hero">
@@ -45,6 +45,7 @@
 
     <!-- tooltip -->
     <div class="tip" id="tip" role="tooltip" hidden></div>
+    <div class="zoom-hint" id="zoom-hint" aria-hidden="true">Hold <kbd class="mod-key">Ctrl</kbd> and scroll to zoom</div>
 
     <!-- explorer HUD -->
     <div class="hud" id="hud" aria-label="Drawing controls">
@@ -100,7 +101,7 @@
   <!-- beats: scroll over the pinned stage -->
   <section class="beat beat-hero" id="top" data-beat="hero" aria-labelledby="h-hero">
     <div class="beat-text">
-      <p class="eyebrow">A teardown of a 2022 Audi e-tron 55 quattro</p>
+      <p class="eyebrow">A teardown of a 2021 Audi e-tron 55 quattro</p>
       <h1 id="h-hero">Forty computers.<br>Five networks.<br><span class="soft">One car.</span></h1>
       <p class="lead">Every address, part number and behaviour here was read from a real car
       through its diagnostic port. This is where each computer sits, what it does, and how a single
@@ -138,7 +139,8 @@
     <div class="beat-text compact">
       <p class="eyebrow"><b>03</b> The drawing</p>
       <h2 id="h-explore">Explore it yourself.</h2>
-      <p class="hint-line">Drag to turn · <kbd>1</kbd>–<kbd>8</kbd> views · click a balloon or a row in the parts list.</p>
+      <p class="hint-line">Drag to turn the car. <span class="hint-fine">Press <kbd>1</kbd> to <kbd>8</kbd> for set views.
+      Hold <kbd class="mod-key">Ctrl</kbd> and scroll to zoom. </span>Tap or click any module on the car, or pick one from the parts list.</p>
     </div>
   </section>
 
@@ -184,8 +186,8 @@
     <header class="ch-head">
       <p class="eyebrow"><b>06</b> The roster</p>
       <h2 id="h-mod">Every module on this car, in one line each.</h2>
-      <p class="lead">Item numbers match the balloons on the drawing, counted front to rear. Select a row to
-      find it on the car.</p>
+      <p class="lead">Item numbers match the numbers on the drawing, counted front to rear. Select a row to
+      see that module on the car. A button then brings you back here.</p>
     </header>
     <div class="toolbar">
       <label class="search"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M13 13l4 4"/></svg>
@@ -206,7 +208,7 @@
       modules it is simply not done. This rule shaped every decision in the project behind this page.</p>
     </header>
     <div class="matrix" id="matrix"></div>
-    <aside class="drawing-note danger">
+    <aside class="drawing-note danger" id="note-1">
       <span class="dn-tag">Note 1</span>
       <p><b>The golden rule.</b> Never write to brakes, airbag, steering or any high-voltage module. A wrong
       coding can silently disable a safety system, or brick an ECU that then needs a factory tool to recover.
@@ -252,76 +254,54 @@
 </section>
 
 <section class="chapter" id="story" aria-labelledby="h-story">
-  <div class="wrap narrow">
+  <div class="wrap">
     <header class="ch-head">
-      <p class="eyebrow"><b>09</b> What we actually did</p>
-      <h2 id="h-story">Read everything. Wrote the parts that mattered — and it worked.</h2>
-      <p class="lead">The honest version: this project read the whole car, then wrote the parts that mattered —
-      the coding bits and a Functions-on-Demand licence — and it worked. The one wall we hit was a licence,
-      not firmware.</p>
+      <p class="eyebrow"><b>09</b> What I found</p>
+      <h2 id="h-story">I wanted the animated taillights. Two writes got me there.</h2>
+      <p class="lead">Reading the car was easy. Writing to it took two steps that I could not find written
+      down anywhere. The first was a coding write to the instrument cluster, which only works after two
+      other values are written. The second was a feature licence on the gateway. Both are explained below,
+      with the other things I learned on the way.</p>
     </header>
     <div class="story-cols">
       <div>
         <h3>What worked</h3>
         <ul class="ticks">
-          <li>Identifying all 40 modules over DoIP by reading <code>F187</code> and <code>F19E</code>.</li>
-          <li>Reading fault memories and identification blocks freely, with no key.</li>
-          <li>Writing the programming date and shop code (<code>F198</code>/<code>F199</code>) — the precondition that unlocks the rest.</li>
-          <li>Writing the coding bits that mattered, each one read back and verified.</li>
-          <li>Writing the Functions-on-Demand licence to the gateway: <b>42/42 FS-IDs unlocked</b>.</li>
-          <li>The taillight animation now runs.</li>
+          <li>Identifying every module over DoIP by reading <code>F187</code> and <code>F19E</code> at each address.</li>
+          <li>Reading fault memories and identification data, with no key.</li>
+          <li>Writing the coding bits I needed, reading each one back to check it.</li>
+          <li>Writing the feature licence to the gateway. All 42 of the car's feature IDs (FS-IDs) are now unlocked.</li>
+          <li>The animated taillights now run.</li>
         </ul>
       </div>
       <div>
-        <h3>What was blocked</h3>
+        <h3>What I could not do, or chose not to</h3>
         <ul class="ticks cross">
-          <li>Seven modules (<code>0x4013 0x4042 0x4044 0x4076 0x407B 0x407C 0x40B8</code>) reject a raw UDS <code>0x14</code> clear and need the ODX-defined clear routine.</li>
-          <li>Any write to brakes, airbag, steering or HV, by choice rather than failure.</li>
+          <li>Clear faults on seven modules. They refuse the standard clear command (<a href="#secret-seven-modules">finding 7</a>).</li>
+          <li>Write to the brakes, airbag, steering or any high-voltage module. I never tried (<a href="#note-1">Note 1</a>).</li>
         </ul>
       </div>
     </div>
-    <aside class="drawing-note ok" id="note-2">
-      <span class="dn-tag">Note 2</span>
-      <p><b>The precondition nobody documents.</b> A coding write to the cluster (<code>2E 0600</code>) was
-      rejected until we found that the ECU only accepts it <em>after</em> the service-interval DIDs
-      <code>F198</code> and <code>F199</code> have been written <em>in the same extended session</em>. No
-      security access, no SFD token, no dwell time. Just a sequence. That one finding unlocked the whole
-      write path. <a class="dn-back" href="#trace">See the exchange ↑</a></p>
-    </aside>
-    <aside class="drawing-note ok">
-      <span class="dn-tag">Note 3</span>
-      <p><b>The gate was a licence, not firmware.</b> The light package is a Functions-on-Demand
-      licence. Once the signed licence was written to the gateway — and the routing bit set — the
-      taillight animation runs. The feature was always in the firmware; it was waiting for the licence.</p>
-    </aside>
-  </div>
-</section>
-
-<section class="chapter" id="secrets" aria-labelledby="h-secrets">
-  <div class="wrap">
-    <header class="ch-head">
-      <p class="eyebrow"><b>10</b> The secrets</p>
-      <h2 id="h-secrets">Nine things the manuals do not say.</h2>
-      <p class="lead">The parts of this car that only show up once you write to it: the preconditions,
-      the licence mechanics, and the one write that finally made the taillights move.</p>
-    </header>
+    <h3 class="tbl-title findings-title" id="secrets">Findings</h3>
     <div class="secrets" id="secrets-list"></div>
   </div>
 </section>
 
 </main>
 
+<button class="return-pill" id="return-pill" type="button"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12m-5-5 5 5 5-5"/></svg><span></span></button>
+
 <footer class="foot">
   <div class="wrap">
     <div class="foot-head">
       <div>
         <p class="eyebrow">Revisions</p>
-        <p class="foot-lede">This is a teardown of my own 2022 e-tron. Every address, part number and UDS
+        <p class="foot-lede">This is a teardown of my own 2021 e-tron. Every address, part number and UDS
         exchange here was read from the car through its diagnostic port; positions, harness routes and bus
         membership are inferred from each module's role and the platform's known layout, and drawn as such.
-        Detailed, car-specific documentation is scarce right now, so the high-level public and community material
-        on the platform's architecture and protocols does a lot of the framing — it explains the shape of the
-        system, not the fine detail.</p>
+        Detailed, car-specific documentation is scarce right now, so the high-level public material
+        on the platform's architecture and protocols does a lot of the framing. The goal of this reasearch
+        was to have fun and this document is only ment to educate.</p>
       </div>
       <p class="foot-meta" id="foot-meta"></p>
     </div>

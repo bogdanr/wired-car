@@ -1,5 +1,5 @@
 /* ============================================================
-   One real exchange — a UDS sequence diagram of the cluster
+   One real exchange: a UDS sequence diagram of the cluster
    read and the write that needed an undocumented precondition.
 
      · Five phases (data: udsPhases), each a band with a letter.
